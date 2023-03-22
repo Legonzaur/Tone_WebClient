@@ -1,7 +1,11 @@
 <template>
-  <select v-on:change="weaponFilter">
-    <option>global</option>
-    <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId">{{ weaponId }}</option>
+  <select v-model="filters.server" v-on:change="fetchPlayers(filters)">
+    <option></option>
+    <option v-for="(serverData, serverId) in servers" v-bind:key="serverId" :value="serverId">{{ serverData.name }}</option>
+  </select>
+  <select v-model="filters.weapon" v-on:change="fetchPlayers(filters)">
+    <option></option>
+    <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
   </select>
   <div class="playersData">
 
@@ -23,9 +27,12 @@ import PlayerChart from '@/components/PlayerChart.vue'
 export default class PlayerView extends Vue {
   players: any = {}
   weapons: any = {}
+  servers: any = {}
+  filters: any = {}
   created () {
     this.fetchPlayers({})
     this.fetchWeapons({})
+    this.fetchServers()
   }
 
   async fetchWeapons ({ server }: { server?: string }) {
@@ -38,23 +45,25 @@ export default class PlayerView extends Vue {
     this.weapons = data
   }
 
+  async fetchServers () {
+    const response = await fetch(
+      'https://tone.sleepycat.date/v1/client/servers'
+    )
+    const data = await response.json()
+    this.servers = data
+    console.log(this.servers)
+  }
+
   data () {
     return { a: 1 }
   }
 
-  weaponFilter (e: Event) {
-    const weapon = (e.target as HTMLInputElement).value
-    if (weapon === 'global') {
-      return this.fetchPlayers({})
-    }
-    this.fetchPlayers({ weapon })
-  }
-
   async fetchPlayers ({ weapon, server }: { weapon?: string, server?: string }) {
     const searchParams: Record<string, string> = {}
-    if (weapon) { searchParams.weapon = weapon }
-    if (server) { searchParams.server = server }
-
+    if (weapon?.toString()) { searchParams.weapon = weapon }
+    if (server?.toString()) { searchParams.server = server }
+    console.log(server, weapon)
+    console.log('https://tone.sleepycat.date/v1/client/players?' + new URLSearchParams(searchParams))
     const response = await fetch(
       'https://tone.sleepycat.date/v1/client/players?' + new URLSearchParams(searchParams)
     )

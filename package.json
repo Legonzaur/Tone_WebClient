@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "chart.js": "^4.2.1",
+    "chartjs-plugin-annotation": "^2.2.1",
     "core-js": "^3.8.3",
     "vue": "^3.2.13",
     "vue-chartjs": "^5.2.0",

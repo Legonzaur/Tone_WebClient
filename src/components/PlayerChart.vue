@@ -1,6 +1,6 @@
 <template>
     <div class="playerChart">
-        <Scatter :data="chart" :options="options" />
+        <Scatter :data="chart" :options="chartOptions" />
     </div>
 </template>
 
@@ -13,11 +13,12 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
+import annotationPlugin from 'chartjs-plugin-annotation'
 
 import { Scatter } from 'vue-chartjs'
 import { defineComponent } from 'vue'
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend)
+ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annotationPlugin)
 
 export default defineComponent({
   name: 'PlayerChart',
@@ -46,16 +47,9 @@ export default defineComponent({
       chartData.datasets[0].labels = Object.keys(this.$props.players)
       chartData.datasets[0].data = Object.values(this.$props.players).map((e:any) => ({ x: e.deaths, y: e.kills }))
       return chartData
-    }
-  },
-  /* watch: {
-    players: function (newval: any, oldval: any): void {
-
-    }
-  }, */
-  data () {
-    return {
-      options: {
+    },
+    chartOptions () {
+      const options = {
         responsive: true,
         plugins: {
           tooltip: {
@@ -71,9 +65,48 @@ export default defineComponent({
                 return label
               }
             }
+          },
+          annotation: {}
+        }
+      }
+      if (!this.$props.players) {
+        return options
+      }
+      const maxX = Math.max(...Object.values(this.$props.players).map(e => e.deaths))
+      const maxY = Math.max(...Object.values(this.$props.players).map(e => e.kills))
+      let endX, endY
+      if (maxY > maxX) {
+        endX = maxX
+        endY = (maxX / maxY) * maxY
+      } else {
+        endY = maxY
+        endX = (maxY / maxX) * maxX
+      }
+      options.plugins.annotation = {
+        annotations: {
+          line: {
+            type: 'line',
+            yMin: 0,
+            xMin: 0,
+            yMax: endY,
+            xMax: endX,
+            borderWidth: 2,
+            borderColor: 'black',
+            borderDash: [1, 5]
           }
         }
       }
+      return options
+    }
+  },
+  /* watch: {
+    players: function (newval: any, oldval: any): void {
+
+    }
+  }, */
+  data () {
+    return {
+
     }
   }
 })
