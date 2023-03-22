@@ -1,86 +1,91 @@
 <template>
   <div class="playerList">
-    <select v-on:change="weaponFilter">
-        <option>global</option>
-        <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId">{{weaponId}}</option>
-    </select>
     <div class="player">
-      <span>username</span>
-      <span>kills</span>
-      <span>deaths</span>
-      <span>k/d</span>
-      <span>max kill distance</span>
-      <span>average kill distance</span>
+      <span v-on:click="sortPlayerList('username')">username</span>
+      <span v-on:click="sortPlayerList('kills')">kills</span>
+      <span v-on:click="sortPlayerList('deaths')">deaths</span>
+      <span v-on:click="sortPlayerList('k/d')">k/d</span>
+      <span v-on:click="sortPlayerList('max_kill_distance')">max kill distance</span>
+      <span v-on:click="sortPlayerList('avg_kill_distance')">average kill distance</span>
     </div>
-    <div class="player" v-for="(playerData, playerId) in players" v-bind:key="playerId">
-      <span>{{ playerData.username }}</span>
-      <span>{{ playerData.kills }}</span>
-      <span>{{ playerData.deaths }}</span>
-      <span>{{ Math.round(playerData.kills/playerData.deaths*100)/100 }}</span>
-      <span>{{ playerData.max_kill_distance }}</span>
-      <span>{{ Math.round(playerData.avg_kill_distance * 100) / 100}}</span>
+    <div class="player" v-for="playerId in playerIdList" v-bind:key="playerId">
+      <span>{{ $props.players[playerId].username }}</span>
+      <span>{{ players[playerId].kills }}</span>
+      <span>{{ players[playerId].deaths }}</span>
+      <span>{{ Math.round(players[playerId].kills / players[playerId].deaths * 100) / 100 }}</span>
+      <span>{{ players[playerId].max_kill_distance }}</span>
+      <span>{{ Math.round(players[playerId].avg_kill_distance * 100) / 100 }}</span>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component'
+import { defineComponent } from 'vue'
 
-@Options({
+export default defineComponent({
   props: {
-    msg: String
-  }
-})
-export default class HelloWorld extends Vue {
-  msg!: string;
-  players: any = {}
-  weapons: any = {}
-  created () {
-    this.fetchPlayers({})
-    this.fetchWeapons({})
-  }
-
-  async fetchPlayers ({ weapon, server }:{weapon?:string, server?:string}) {
-    const searchParams:Record<string, string> = {}
-    if (weapon) { searchParams.weapon = weapon }
-    if (server) { searchParams.server = server }
-
-    const response = await fetch(
-      'https://tone.sleepycat.date/v1/client/players?' + new URLSearchParams(searchParams)
-    )
-    const data = await response.json()
-    this.players = data
-  }
-
-  async fetchWeapons ({ server }:{server?:string}) {
-    const searchParams:Record<string, string> = {}
-    if (server) { searchParams.server = server }
-    const response = await fetch(
-      'https://tone.sleepycat.date/v1/client/weapons?' + new URLSearchParams(searchParams)
-    )
-    const data = await response.json()
-    this.weapons = data
-    console.log(data)
-  }
-
-  weaponFilter (e:Event) {
-    const weapon = (e.target as HTMLInputElement).value
-    if (weapon === 'global') {
-      return this.fetchPlayers({ })
+    players: Object
+  },
+  data () {
+    return {
+      sortingData: { direction: -1, argument: '' },
+      playerIdList: [] as string[]
     }
-    this.fetchPlayers({ weapon })
+  },
+  watch: {
+    players: function (newval: any, oldval: any): void {
+      this.playerIdList = []
+      this.sortingData.direction *= -1
+      this.playerIdList = Object.keys(newval)
+      this.sortPlayerList(this.sortingData.argument)
+    }
+  },
+  methods: {
+    sortPlayerList (arg: string) {
+      if (arg === this.sortingData.argument) {
+        this.sortingData.direction *= -1
+      } else {
+        if (arg === 'username') {
+          this.sortingData.direction = 1
+        }
+      }
+      this.sortingData.argument = arg
+
+      this.playerIdList.sort((a:any, b:any) => {
+        if (!this.$props.players) {
+          return 0
+        }
+        let varA = this.$props.players[a][arg]
+        let varB = this.$props.players[b][arg]
+        if (arg === 'k/d') {
+          varA = this.$props.players[a].kills / this.$props.players[a].deaths
+          varB = this.$props.players[b].kills / this.$props.players[b].deaths
+        }
+
+        if (varA < varB) {
+          return -1 * this.sortingData.direction
+        }
+        if (varA > varB) {
+          return 1 * this.sortingData.direction
+        }
+        // names must be equal
+        return 0
+      })
+    }
   }
-}
+
+})
 </script>
 
 <style scoped>
 .player {
   display: grid;
-  grid-template-columns: 200px 100px 100px 100px 100px 100px;
+  grid-template-columns: 200px 75px 75px 75px 100px 100px;
   background: lightgray;
   margin: 10px;
   text-align: left;
 }
+
 .player span {
   text-overflow: ellipsis;
   overflow: hidden;
