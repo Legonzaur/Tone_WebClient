@@ -14,6 +14,8 @@ import {
   Legend
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
+import { Store, useStore } from 'vuex'
+import { Player, Weapon } from '@/store/index'
 
 import { Scatter } from 'vue-chartjs'
 import { defineComponent } from 'vue'
@@ -23,7 +25,7 @@ ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annota
 export default defineComponent({
   name: 'PlayerChart',
   props: {
-    players: Object
+    filters: Object
   },
   components: {
     Scatter
@@ -37,15 +39,24 @@ export default defineComponent({
             labels: [] as string[],
             borderColor: '#f87979',
             backgroundColor: '#f87979',
+            pointRadius: [1],
+            pointStyle: ['dot'],
             data: [] as {x:number, y:number}[]
           }
         ]
       }
-      if (!this.$props.players) {
+      if (!this.players) {
         return chartData
       }
-      chartData.datasets[0].labels = Object.keys(this.$props.players)
-      chartData.datasets[0].data = Object.values(this.$props.players).map((e:any) => ({ x: e.deaths, y: e.kills }))
+      chartData.datasets[0].labels = this.playerIdList
+      chartData.datasets[0].data = this.playerIdList.map(e => {
+        if (!this.players) {
+          return { x: 0, y: 0 }
+        }
+        return { x: this.players[e].deaths, y: this.players[e].kills }
+      })
+      chartData.datasets[0].pointRadius = [1].fill(1, 0, chartData.datasets[0].labels.length)
+      chartData.datasets[0].pointStyle = ['dot'].fill('dot', 0, chartData.datasets[0].labels.length)
       return chartData
     },
     chartOptions () {
@@ -56,10 +67,10 @@ export default defineComponent({
             callbacks: {
               label: (ctx:any) => {
                 let label:string
-                if (!this.$props.players) {
+                if (!this.players) {
                   label = ctx.dataset.labels[ctx.dataIndex]
                 } else {
-                  label = this.$props.players[ctx.dataset.labels[ctx.dataIndex]].username
+                  label = this.players[ctx.dataset.labels[ctx.dataIndex]].username
                 }
                 label += ' (' + ctx.parsed.y + ' kills ' + ctx.parsed.x + ' deaths)'
                 return label
@@ -69,11 +80,11 @@ export default defineComponent({
           annotation: {}
         }
       }
-      if (!this.$props.players) {
+      if (!this.players) {
         return options
       }
-      const maxX = Math.max(...Object.values(this.$props.players).map(e => e.deaths))
-      const maxY = Math.max(...Object.values(this.$props.players).map(e => e.kills))
+      const maxX = Math.max(...Object.values(this.players).map(e => e.deaths))
+      const maxY = Math.max(...Object.values(this.players).map(e => e.kills))
       let endX, endY
       if (maxY > maxX) {
         endX = maxX
@@ -97,16 +108,14 @@ export default defineComponent({
         }
       }
       return options
-    }
-  },
-  /* watch: {
-    players: function (newval: any, oldval: any): void {
+    },
+    players ():{[key:string]:Player} { return this.store.getters.getPlayerList(this.filters) },
+    playerIdList ():string[] { return Object.keys(this.players) }
 
-    }
-  }, */
+  },
   data () {
     return {
-
+      store: useStore()
     }
   }
 })

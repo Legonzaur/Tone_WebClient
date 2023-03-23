@@ -9,7 +9,7 @@
       <span v-on:click="sortPlayerList('avg_kill_distance')">average kill distance</span>
     </div>
     <div class="player" v-for="playerId in playerIdList" v-bind:key="playerId">
-      <span>{{ $props.players[playerId].username }}</span>
+      <span>{{ players[playerId].username }}</span>
       <span>{{ players[playerId].kills }}</span>
       <span>{{ players[playerId].deaths }}</span>
       <span>{{ Math.round(players[playerId].kills / players[playerId].deaths * 100) / 100 }}</span>
@@ -21,27 +21,37 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { Player } from '@/store/index'
+import { useStore } from 'vuex'
 
 export default defineComponent({
   props: {
-    players: Object
+    filters: Object
   },
   data () {
     return {
-      sortingData: { direction: -1, argument: '' },
-      playerIdList: [] as string[]
+      sortingData: { direction: -1, argument: '' as keyof Player | 'k/d' },
+      playerIdList: [] as string[],
+      store: useStore()
     }
   },
+  computed: {
+    players ():{[key:string]:Player} { return this.store.getters.getPlayerList(this.filters) }
+  },
   watch: {
-    players: function (newval: any, oldval: any): void {
-      this.playerIdList = []
-      this.sortingData.direction *= -1
-      this.playerIdList = Object.keys(newval)
-      this.sortPlayerList(this.sortingData.argument)
+    players: {
+      handler (newval:{[key:string]:Player}): void {
+        if (!newval) return
+        this.playerIdList = []
+        this.sortingData.direction *= -1
+        this.playerIdList = Object.keys(newval)
+        this.sortPlayerList(this.sortingData.argument)
+      },
+      immediate: true
     }
   },
   methods: {
-    sortPlayerList (arg: string) {
+    sortPlayerList (arg: ((keyof Player) | 'k/d')) {
       if (arg === this.sortingData.argument) {
         this.sortingData.direction *= -1
       } else {
@@ -51,15 +61,17 @@ export default defineComponent({
       }
       this.sortingData.argument = arg
 
-      this.playerIdList.sort((a:any, b:any) => {
-        if (!this.$props.players) {
+      this.playerIdList.sort((a:string, b:string) => {
+        if (!this.players) {
           return 0
         }
-        let varA = this.$props.players[a][arg]
-        let varB = this.$props.players[b][arg]
+        let varA, varB
         if (arg === 'k/d') {
-          varA = this.$props.players[a].kills / this.$props.players[a].deaths
-          varB = this.$props.players[b].kills / this.$props.players[b].deaths
+          varA = this.players[a].kills / this.players[a].deaths
+          varB = this.players[b].kills / this.players[b].deaths
+        } else {
+          varA = this.players[a][arg]
+          varB = this.players[b][arg]
         }
 
         if (varA < varB) {
@@ -68,7 +80,6 @@ export default defineComponent({
         if (varA > varB) {
           return 1 * this.sortingData.direction
         }
-        // names must be equal
         return 0
       })
     }
