@@ -12,15 +12,15 @@
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
 
-    <VueMultiselect :showLabels="false" placeholder="Select server" v-model="models.server" :options="servers"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="models.server" :options="servers"
       :allow-empty="true" :custom-label="((e) => e.name)" @select="changeFilter({ server: $event.id })"
       @remove="changeFilter({ server: '' })"></VueMultiselect>
 
-    <VueMultiselect :showLabels="false" selectLabel="" placeholder="Select weapon" v-model="models.weapon"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="models.weapon"
       :options="sortedWeaponList" :allow-empty="true" @select="changeFilter({ weapon: $event })"
       @remove="changeFilter({ weapon: '' })"></VueMultiselect>
 
-    <VueMultiselect :showLabels="false" selectLabel="" placeholder="Search player" v-model="playerHighlighted"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
       :options="sortedPlayerList" :allow-empty="true" :custom-label="((e) => players[e]?.username)"></VueMultiselect>
   </div>
 
