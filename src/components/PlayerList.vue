@@ -171,6 +171,7 @@ export default defineComponent({
 }
 .playerRow>div {
   padding:.5em .8em 0 .25em;
+  overflow:hidden;
 }
 
 .playerHeaders,
