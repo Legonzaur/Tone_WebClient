@@ -14,19 +14,22 @@ import {
   Legend
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
+import dataLabel from 'chartjs-plugin-datalabels'
 import { Store, useStore } from 'vuex'
 import { Player, Weapon } from '@/store/index'
 
 import { Scatter } from 'vue-chartjs'
 import { defineComponent } from 'vue'
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annotationPlugin)
+ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annotationPlugin, dataLabel)
 
 export default defineComponent({
   name: 'PlayerChart',
   props: {
-    filters: Object
+    filters: Object,
+    playerHighlighted: String
   },
+  emits: ['highlightPlayer'],
   components: {
     Scatter
   },
@@ -37,10 +40,11 @@ export default defineComponent({
           {
             label: 'Players',
             labels: [] as string[],
-            borderColor: '#f87979',
+            borderColor: ['#f87979'],
             backgroundColor: '#f87979',
             pointRadius: [1],
             pointStyle: ['dot'],
+            hoverRadius: [4],
             data: [] as {x:number, y:number}[]
           }
         ]
@@ -55,13 +59,24 @@ export default defineComponent({
         }
         return { x: this.players[e].deaths, y: this.players[e].kills }
       })
-      chartData.datasets[0].pointRadius = [1].fill(1, 0, chartData.datasets[0].labels.length)
-      chartData.datasets[0].pointStyle = ['dot'].fill('dot', 0, chartData.datasets[0].labels.length)
+      chartData.datasets[0].pointRadius = Array(chartData.datasets[0].labels.length).fill(1)
+      chartData.datasets[0].pointStyle = Array(chartData.datasets[0].labels.length).fill('dot')
+      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill('darkblue')
+      chartData.datasets[0].hoverRadius = Array(chartData.datasets[0].labels.length).fill(4)
+      if (this.$props.playerHighlighted) {
+        const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
+        chartData.datasets[0].pointRadius[index] = 20
+        chartData.datasets[0].pointStyle[index] = 'crossRot'
+        chartData.datasets[0].borderColor[index] = 'red'
+        chartData.datasets[0].hoverRadius[index] = 30
+      }
       return chartData
     },
     chartOptions () {
       const options = {
         responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 500 },
         plugins: {
           tooltip: {
             callbacks: {
@@ -77,7 +92,27 @@ export default defineComponent({
               }
             }
           },
-          annotation: {}
+          annotation: {},
+          datalabels: {
+            formatter: (value:any, context:any) => {
+              return this.players[this.playerIdList[context.dataIndex]].username
+            },
+            backgroundColor: Array(this.playerIdList.length).fill(null),
+            borderColor: 'black',
+            borderWidth: Array(this.playerIdList.length).fill(0),
+            borderRadius: 5,
+            display: Array(this.playerIdList.length).fill('auto'),
+            align: '-45',
+            anchor: 'end',
+            clamp: true
+          }
+        },
+        onClick: (e:Event, element:any) => {
+          this.$emit('highlightPlayer', element.length > 0 ? this.playerIdList[element[0].index] : undefined)
+        },
+        onHover: (e:any, element:any) => {
+          if (!e.native.target) return
+          (e.native.target as HTMLElement).style.cursor = element[0] ? 'pointer' : 'default'
         }
       }
       if (!this.players) {
@@ -107,9 +142,16 @@ export default defineComponent({
           }
         }
       }
+
+      if (this.$props.playerHighlighted) {
+        const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
+        options.plugins.datalabels.display[index] = true
+        options.plugins.datalabels.backgroundColor[index] = 'red'
+        options.plugins.datalabels.borderWidth[index] = 1
+      }
       return options
     },
-    players ():{[key:string]:Player} { return this.store.getters.getPlayerList(this.filters) },
+    players ():{[key:string]:Player} { return this.store.getters.getPlayerList(this.filters) || {} },
     playerIdList ():string[] { return Object.keys(this.players) }
 
   },
@@ -123,8 +165,5 @@ export default defineComponent({
 
 <style scoped>
 .playerChart {
-  position:sticky;
-  height:fit-content;
-  top:0
 }
 </style>

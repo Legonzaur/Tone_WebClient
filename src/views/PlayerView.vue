@@ -1,17 +1,23 @@
 <template>
-  <select v-on:change="changeFilter({ server: ($event.target as HTMLInputElement).value })">
-    <option></option>
-    <option v-for="(serverData) in servers" v-bind:key="serverData.id" :value="serverData.id">{{ serverData.name }}
-    </option>
-  </select>
-  <select v-on:change="changeFilter({ weapon: ($event.target as HTMLInputElement).value })">
-    <option></option>
-    <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
-  </select>
-  <div class="playersData">
+  <div id="filters">
+    <input type="number" min="0" v-model="filters.minKills">
+    <input type="number" min="0" v-model="filters.minDeaths">
+    <select v-on:change="changeFilter({ server: ($event.target as HTMLInputElement).value })">
+      <option></option>
+      <option v-for="(serverData) in servers" v-bind:key="serverData.id" :value="serverData.id">{{ serverData.name }}
+      </option>
+    </select>
+    <select v-on:change="changeFilter({ weapon: ($event.target as HTMLInputElement).value })">
+      <option></option>
+      <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
+    </select>
+  </div>
 
-    <PlayerList :filters="filters"></PlayerList>
-    <PlayerChart :filters="filters"></PlayerChart>
+  <div id="playerView">
+    <PlayerList :filters="filters" v-on:highlight-player="playerHighlighted = $event"
+      :playerHighlighted="playerHighlighted"></PlayerList>
+    <PlayerChart :filters="filters" v-on:highlight-player="playerHighlighted = $event"
+      :playerHighlighted="playerHighlighted"></PlayerChart>
   </div>
 </template>
 
@@ -30,13 +36,13 @@ export default defineComponent({
 
   data () {
     return {
-      filters: {},
-      store: useStore()
-    } as { filters: { weapon?: string, server?: string }, store: Store<any> }
+      filters: { minKills: 100, minDeaths: 100 },
+      store: useStore(),
+      playerHighlighted: undefined
+    } as { filters: { weapon?: string, server?: string }, store: Store<any>, playerHighlighted?: string }
   },
   computed: {
     servers (): Server[] { return this.store.state.servers },
-    players (): { [key: string]: Player } { return this.store.getters.getPlayerList(this.filters) },
     weapons (): { [key: string]: Weapon } { return this.store.getters.getWeaponList(this.filters) }
   },
   methods: {
@@ -58,8 +64,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.playersData {
+#playerView {
+  margin: 0 1rem 1rem 1rem;
+  /* height:100%; */
   display: grid;
+  overflow: auto;
   grid-template-columns: 50% 50%;
+}
+
+#filters {
+  grid-area: filters;
 }
 </style>

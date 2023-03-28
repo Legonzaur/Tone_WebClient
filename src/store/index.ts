@@ -43,7 +43,15 @@ export default createStore<State>({
     weapons: {}
   },
   getters: {
-    getPlayerList: (state) => ({ server, weapon }: { server?: number, weapon?: string }) => {
+    getPlayerList: (state) => ({ server, weapon, minKills, minDeaths }: { server?: number, weapon?: string, minKills:number, minDeaths:number }) => {
+      let playerFilter: string[] = []
+      if (state.players['']) {
+        playerFilter = Object.entries(state.players['']).filter(([, value]:any) => { return (value.kills >= minKills) || (value.deaths >= minDeaths) }).map(e => e[0])
+      }
+      if (playerFilter.length > 0 && state.players[(server || '') + (weapon || '')]) {
+        return Object.fromEntries(Object.entries(state.players[(server || '') + (weapon || '')]).filter(([key]) => playerFilter.includes(key)))
+      }
+
       return state.players[(server || '') + (weapon || '')]
     },
     getWeaponList: (state) => ({ server, player }: { server?: number, player?: string }) => {
@@ -76,6 +84,7 @@ export default createStore<State>({
         data[e].max_kill_distance = Number(data[e].max_kill_distance)
         data[e].avg_kill_distance = Number(data[e].avg_kill_distance)
       })
+
       context.commit('setPlayers', { data, filters: { weapon, server } })
     },
     async fetchWeapons (context, { player, server }) {
