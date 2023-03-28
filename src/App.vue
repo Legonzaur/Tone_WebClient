@@ -3,6 +3,8 @@
     <nav>
       <!-- <div class="navbar-element">hamburger</div> -->
       <div class="navbar-element"><!--<span>logo&nbsp;</span>--->TONE&nbsp;API</div>
+      <div class="navbar-element"><a href="https://github.com/Legonzaur/Tone_WebClient">Github</a></div>
+      <div class="navbar-element"><a href="https://github.com/Legonzaur/ToneAPI_servermod">Northstar&nbsp;Server&nbsp;Mod</a></div>
       <div class="spacer"></div>
       <!-- <router-link to="/" class="navbar-element">Home</router-link>
       <router-link to="/about" class="navbar-element">About</router-link> -->
