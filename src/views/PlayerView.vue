@@ -9,7 +9,7 @@
     </select>
     <select v-on:change="changeFilter({ weapon: ($event.target as HTMLInputElement).value })">
       <option></option>
-      <option v-for="(weaponData, weaponId) in weapons" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
+      <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select>
   </div>
 
@@ -43,7 +43,11 @@ export default defineComponent({
   },
   computed: {
     servers (): Server[] { return this.store.state.servers },
-    weapons (): { [key: string]: Weapon } { return this.store.getters.getWeaponList(this.filters) }
+    weapons (): { [key: string]: Weapon } { return this.store.getters.getWeaponList(this.filters) },
+    sortedWeaponList (): string[] {
+      const weapons = Object.keys(this.weapons)
+      return weapons.sort()
+    }
   },
   methods: {
     async changeFilter ({ weapon, server }: { weapon?: string, server?: string }) {

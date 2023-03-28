@@ -75,6 +75,10 @@ nav a.router-link-exact-active {
   padding: 24px 32px;
 }
 
+.navbar-element:hover{
+  background: var(--current-line)
+}
+
 .spacer {
   width: 100%;
 }

@@ -1,13 +1,13 @@
 <template>
   <div class="playerTable" v-on:keydown="selectNextPlayer" tabindex="0">
     <div class="playerHeaders">
-      <span>Index</span>
-      <span v-on:click="sortPlayerList('username')">username</span>
-      <span v-on:click="sortPlayerList('kills')">kills</span>
-      <span v-on:click="sortPlayerList('deaths')">deaths</span>
-      <span v-on:click="sortPlayerList('k/d')">k/d</span>
-      <span v-on:click="sortPlayerList('max_kill_distance')">max kill distance</span>
-      <span v-on:click="sortPlayerList('avg_kill_distance')">average kill distance</span>
+      <span></span>
+      <span v-on:click="sortPlayerList('username')" :class="sortingData.argument == 'username' ? 'selected' : ''">username</span>
+      <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">kills</span>
+      <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">deaths</span>
+      <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">k/d</span>
+      <span v-on:click="sortPlayerList('max_kill_distance')" :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max kill distance</span>
+      <span v-on:click="sortPlayerList('avg_kill_distance')" :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average kill distance</span>
     </div>
     <div class="playerRow" v-for="(playerId, index) in playerIdList" v-bind:key="playerId"
       v-on:click="$emit('highlightPlayer', playerId)" :ref="`player:` + playerId">
@@ -36,7 +36,7 @@ export default defineComponent({
   emits: ['highlightPlayer'],
   data () {
     return {
-      sortingData: { direction: -1, argument: '' as keyof Player | 'k/d' },
+      sortingData: { direction: -1, argument: 'kills' as keyof Player | 'k/d' },
       playerIdList: [] as string[],
       store: useStore(),
       selected: undefined as string | undefined
@@ -142,6 +142,7 @@ export default defineComponent({
 }
 
 .playerTable {
+  margin-right: 1rem;
   overflow: auto;
   height: 100%;
 }
@@ -154,7 +155,7 @@ export default defineComponent({
 .playerRow,
 .playerHeaders {
   display: grid;
-  grid-template-columns: 50px 20ch 6ch 6ch 6ch 10ch 10ch;
+  grid-template-columns: 4ch 2fr 6ch 6ch 6ch 10ch 1fr;
   background: var(--bg-color);
   text-align: left;
   cursor: pointer;
@@ -180,6 +181,10 @@ export default defineComponent({
 .playerRow>span:not(:last-child),
 .playerHeaders>span:not(:last-child) {
   border-right: solid var(--bg-color) 2px;
+}
+
+.playerHeaders>span:last-child {
+  width:100%;
 }
 
 span {

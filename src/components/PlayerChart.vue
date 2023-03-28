@@ -1,5 +1,5 @@
 <template>
-    <div class="playerChart">
+    <div class="playerChart" ref="container">
         <Scatter :data="chart" :options="chartOptions" />
     </div>
 </template>
@@ -33,15 +33,32 @@ export default defineComponent({
   components: {
     Scatter
   },
+  mounted () {
+    this.refreshColors++
+  },
   computed: {
+    colors () {
+      // eslint-disable-next-line no-unused-expressions
+      this.refreshColors
+      const colors = {} as {[key:string]:string}
+      if (this.$refs.container) {
+        const style = getComputedStyle(this.$refs.container as Element)
+        colors.fg = style.getPropertyValue('--foreground')
+        colors.orange = style.getPropertyValue('--orange')
+        colors.currentLine = style.getPropertyValue('--current-line')
+      } else {
+        colors.fg = '#ffffff'
+      }
+      return colors
+    },
     chart () {
       const chartData = {
         datasets: [
           {
             label: 'Players',
             labels: [] as string[],
-            borderColor: ['#f87979'],
-            backgroundColor: '#f87979',
+            borderColor: [this.colors.fg],
+            backgroundColor: [this.colors.fg],
             pointRadius: [1],
             pointStyle: ['dot'],
             hoverRadius: [4],
@@ -61,13 +78,16 @@ export default defineComponent({
       })
       chartData.datasets[0].pointRadius = Array(chartData.datasets[0].labels.length).fill(1)
       chartData.datasets[0].pointStyle = Array(chartData.datasets[0].labels.length).fill('dot')
-      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill('darkblue')
+      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill(this.colors.fg)
+      chartData.datasets[0].backgroundColor = chartData.datasets[0].borderColor
       chartData.datasets[0].hoverRadius = Array(chartData.datasets[0].labels.length).fill(4)
       if (this.$props.playerHighlighted) {
         const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
         chartData.datasets[0].pointRadius[index] = 20
         chartData.datasets[0].pointStyle[index] = 'crossRot'
-        chartData.datasets[0].borderColor[index] = 'red'
+        chartData.datasets[0].borderColor[index] = this.colors.orange
+        // No need to do that since arrays are already the same (reference)
+        // chartData.datasets[0].backgroundColor[index] = chartData.datasets[0].borderColor[index]
         chartData.datasets[0].hoverRadius[index] = 30
       }
       return chartData
@@ -77,6 +97,21 @@ export default defineComponent({
         responsive: true,
         maintainAspectRatio: true,
         animation: { duration: 500 },
+        layout: { autoPadding: false },
+        scales: {
+          y: {
+            title: {
+              text: 'Kills',
+              display: true
+            }
+          },
+          x: {
+            title: {
+              text: 'Deaths',
+              display: true
+            }
+          }
+        },
         plugins: {
           tooltip: {
             callbacks: {
@@ -98,7 +133,7 @@ export default defineComponent({
               return this.players[this.playerIdList[context.dataIndex]].username
             },
             backgroundColor: Array(this.playerIdList.length).fill(null),
-            borderColor: 'black',
+            borderColor: this.colors.fg,
             borderWidth: Array(this.playerIdList.length).fill(0),
             borderRadius: 5,
             display: Array(this.playerIdList.length).fill('auto'),
@@ -137,7 +172,7 @@ export default defineComponent({
             yMax: endY,
             xMax: endX,
             borderWidth: 2,
-            borderColor: 'black',
+            borderColor: this.colors.orange,
             borderDash: [1, 5]
           }
         }
@@ -146,7 +181,7 @@ export default defineComponent({
       if (this.$props.playerHighlighted) {
         const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
         options.plugins.datalabels.display[index] = true
-        options.plugins.datalabels.backgroundColor[index] = 'red'
+        options.plugins.datalabels.backgroundColor[index] = this.colors.orange
         options.plugins.datalabels.borderWidth[index] = 1
       }
       return options
@@ -157,13 +192,15 @@ export default defineComponent({
   },
   data () {
     return {
-      store: useStore()
+      store: useStore(),
+      refreshColors: 0
     }
   }
 })
 </script>
 
 <style scoped>
-.playerChart {
+canvas {
+  background: var(--accent);
 }
 </style>
