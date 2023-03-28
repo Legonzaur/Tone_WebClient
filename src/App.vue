@@ -2,11 +2,11 @@
   <header>
     <nav>
       <!-- <div class="navbar-element">hamburger</div> -->
-      <div class="navbar-element"><span>logo&nbsp;</span>TONE&nbsp;API</div>
+      <div class="navbar-element"><!--<span>logo&nbsp;</span>--->TONE&nbsp;API</div>
       <div class="spacer"></div>
-      <router-link to="/" class="navbar-element">Home</router-link>
-      <router-link to="/about" class="navbar-element">About</router-link>
-      <router-link to="/players" class="navbar-element">Players</router-link>
+      <!-- <router-link to="/" class="navbar-element">Home</router-link>
+      <router-link to="/about" class="navbar-element">About</router-link> -->
+      <router-link to="/" class="navbar-element">Players</router-link>
     </nav>
   </header>
   <router-view />
@@ -31,7 +31,7 @@ body {
 #app {
   height: 100vh;
   width: 100vw;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -44,6 +44,17 @@ body {
     'footer  body ';
   grid-template-columns: 1fr 5fr;
   grid-template-rows: auto 1fr auto auto;
+}
+
+@media only screen and (max-width: 922px) {
+  #app{
+    grid-template-areas:
+    'header  header'
+    'filters filters'
+    'body body ';
+    grid-template-rows: auto auto 1fr;
+  }
+
 }
 
 header {

@@ -2,22 +2,22 @@
   <div class="playerTable" v-on:keydown="selectNextPlayer" tabindex="0">
     <div class="playerHeaders">
       <span></span>
-      <span v-on:click="sortPlayerList('username')" :class="sortingData.argument == 'username' ? 'selected' : ''">username</span>
-      <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">kills</span>
-      <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">deaths</span>
-      <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">k/d</span>
-      <span v-on:click="sortPlayerList('max_kill_distance')" :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max kill distance</span>
-      <span v-on:click="sortPlayerList('avg_kill_distance')" :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average kill distance</span>
+      <span v-on:click="sortPlayerList('username')" :class="sortingData.argument == 'username' ? 'selected' : ''">Username</span>
+      <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
+      <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
+      <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
+      <span v-on:click="sortPlayerList('max_kill_distance')" :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max distance</span>
+      <span v-on:click="sortPlayerList('avg_kill_distance')" :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average distance</span>
     </div>
     <div class="playerRow" v-for="(playerId, index) in playerIdList" v-bind:key="playerId"
       v-on:click="$emit('highlightPlayer', playerId)" :ref="`player:` + playerId">
-      <span>{{ index }}</span>
-      <span>{{ players[playerId].username }}</span>
-      <span>{{ players[playerId].kills }}</span>
-      <span>{{ players[playerId].deaths }}</span>
-      <span>{{ Math.round(players[playerId].kills / players[playerId].deaths * 100) / 100 }}</span>
-      <span>{{ players[playerId].max_kill_distance }}</span>
-      <span>{{ Math.round(players[playerId].avg_kill_distance * 100) / 100 }}</span>
+      <div><span>{{ index }}</span></div>
+      <div><span>{{ players[playerId].username }}</span></div>
+      <div><span>{{ players[playerId].kills }}</span></div>
+      <div><span>{{ players[playerId].deaths }}</span></div>
+      <div><span>{{ Math.round(players[playerId].kills / players[playerId].deaths * 100) / 100 }}</span></div>
+      <div><span>{{ players[playerId].max_kill_distance }}</span></div>
+      <div><span>{{ Math.round(players[playerId].avg_kill_distance * 100) / 100 }}</span></div>
     </div>
   </div>
 </template>
@@ -147,21 +147,30 @@ export default defineComponent({
   height: 100%;
 }
 
-.playerHeaders {
-  position: sticky;
-  top: 0px;
-}
-
 .playerRow,
 .playerHeaders {
+  box-sizing: border-box;
   display: grid;
-  grid-template-columns: 4ch 2fr 6ch 6ch 6ch 10ch 1fr;
+  grid-template-columns: 4ch 20ch 6ch 6ch 6ch 10ch 1fr;
   background: var(--bg-color);
   text-align: left;
   cursor: pointer;
   margin: 0;
   /* border: 2px solid transparent; */
   transition: border .25s;
+  height:2em;
+}
+.playerHeaders{
+  position:sticky;
+  top:0;
+  height:3em;
+}
+
+.playerHeaders>span{
+  padding:.5em .8em 0 .25em;
+}
+.playerRow>div {
+  padding:.5em .8em 0 .25em;
 }
 
 .playerHeaders,
@@ -173,13 +182,13 @@ export default defineComponent({
   background: var(--accent);
 }
 
-.playerHeaders span:hover,
+.playerHeaders div:hover,
 .playerRow:hover {
   background: var(--bg-color);
 }
 
-.playerRow>span:not(:last-child),
-.playerHeaders>span:not(:last-child) {
+.playerRow>div:not(:last-child),
+.playerHeaders>div:not(:last-child) {
   border-right: solid var(--bg-color) 2px;
 }
 
@@ -187,10 +196,14 @@ export default defineComponent({
   width:100%;
 }
 
-span {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  user-select: none;
+@media only screen and (max-width: 600px) {
+  .playerRow>div:nth-child(6), .playerHeaders>span:nth-child(6),.playerRow>div:nth-child(7), .playerHeaders>span:nth-child(7) {
+  display: none;
+  }
+  .playerRow,
+.playerHeaders{
+  grid-template-columns: 4ch 20ch 6ch 6ch 1fr;
+}
 }
 
 .player span {
@@ -199,4 +212,6 @@ span {
 
 .selected {
   background: var(--comment) !important;
-}</style>
+}
+
+</style>

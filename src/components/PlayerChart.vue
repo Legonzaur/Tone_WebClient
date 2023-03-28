@@ -44,7 +44,9 @@ export default defineComponent({
       if (this.$refs.container) {
         const style = getComputedStyle(this.$refs.container as Element)
         colors.fg = style.getPropertyValue('--foreground')
+        colors.bg = style.getPropertyValue('--bg-color')
         colors.orange = style.getPropertyValue('--orange')
+        colors.cyan = style.getPropertyValue('--cyan')
         colors.currentLine = style.getPropertyValue('--current-line')
       } else {
         colors.fg = '#ffffff'
@@ -78,7 +80,7 @@ export default defineComponent({
       })
       chartData.datasets[0].pointRadius = Array(chartData.datasets[0].labels.length).fill(1)
       chartData.datasets[0].pointStyle = Array(chartData.datasets[0].labels.length).fill('dot')
-      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill(this.colors.fg)
+      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill(this.colors.cyan)
       chartData.datasets[0].backgroundColor = chartData.datasets[0].borderColor
       chartData.datasets[0].hoverRadius = Array(chartData.datasets[0].labels.length).fill(4)
       if (this.$props.playerHighlighted) {
@@ -102,13 +104,21 @@ export default defineComponent({
           y: {
             title: {
               text: 'Kills',
-              display: true
+              display: true,
+              color: this.colors.fg
+            },
+            ticks: {
+              color: this.colors.fg
             }
           },
           x: {
             title: {
               text: 'Deaths',
-              display: true
+              display: true,
+              color: this.colors.fg
+            },
+            ticks: {
+              color: this.colors.fg
             }
           }
         },
@@ -128,6 +138,7 @@ export default defineComponent({
             }
           },
           annotation: {},
+          legend: { display: false },
           datalabels: {
             formatter: (value:any, context:any) => {
               return this.players[this.playerIdList[context.dataIndex]].username
@@ -139,7 +150,8 @@ export default defineComponent({
             display: Array(this.playerIdList.length).fill('auto'),
             align: '-45',
             anchor: 'end',
-            clamp: true
+            clamp: true,
+            color: Array(this.playerIdList.length).fill(this.colors.fg)
           }
         },
         onClick: (e:Event, element:any) => {
@@ -183,6 +195,7 @@ export default defineComponent({
         options.plugins.datalabels.display[index] = true
         options.plugins.datalabels.backgroundColor[index] = this.colors.orange
         options.plugins.datalabels.borderWidth[index] = 1
+        options.plugins.datalabels.color[index] = this.colors.bg
       }
       return options
     },
@@ -202,5 +215,10 @@ export default defineComponent({
 <style scoped>
 canvas {
   background: var(--accent);
+}
+@media only screen and (max-width: 922px) {
+  canvas{
+    display:none !important
+  }
 }
 </style>
