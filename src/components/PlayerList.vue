@@ -9,7 +9,7 @@
       <span v-on:click="sortPlayerList('max_kill_distance')" :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max distance</span>
       <span v-on:click="sortPlayerList('avg_kill_distance')" :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <div class="playerRow" v-for="(playerId, index) in playerIdList" v-bind:key="playerId"
+    <div :class="'playerRow ' + (playerId === $props.playerHighlighted ? 'selected' : '')" v-for="(playerId, index) in playerIdList" v-bind:key="playerId"
       v-on:click="$emit('highlightPlayer', playerId)" :ref="`player:` + playerId">
       <div><span>{{ index }}</span></div>
       <div><span>{{ players[playerId].username }}</span></div>
@@ -37,8 +37,7 @@ export default defineComponent({
     return {
       sortingData: { direction: -1, argument: 'kills' as keyof Player | 'k/d' },
       playerIdList: [] as string[],
-      store: useStore(),
-      selected: undefined as string | undefined
+      store: useStore()
     }
   },
   computed: {
@@ -52,24 +51,12 @@ export default defineComponent({
         this.sortingData.direction *= -1
         this.playerIdList = Object.keys(newval)
         this.sortPlayerList(this.sortingData.argument)
-        this.$nextTick(() => {
-          const element = (this.$refs['player:' + this.selected] as HTMLElement[])
-          if (element && element.length > 0) element[0].classList.add('selected')
-        })
       },
       immediate: true
     },
-    playerHighlighted (newval, oldval) {
-      const oldElement = this.$refs['player:' + oldval] as HTMLElement[]
-      if (oldElement) {
-        oldElement[0].classList.remove('selected')
-        delete this.selected
-      }
+    playerHighlighted (newval) {
       const newElement = this.$refs['player:' + newval] as HTMLElement[]
-      if (!newElement) return
-      newElement[0].classList.add('selected')
       newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' })
-      this.selected = newval
     }
   },
   updated () {
@@ -121,10 +108,10 @@ export default defineComponent({
         ArrowRight: 10,
         ArrowLeft: -10
       } as { [key: string]: number }
-      if (!this.selected) return
+      if (!this.$props.playerHighlighted) return
       if (!Object.keys(values).includes(e.key)) return
       e.preventDefault()
-      const index = this.playerIdList.indexOf(this.selected)
+      const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
       let nextIndex = (index + values[e.key])
       if (nextIndex >= this.playerIdList.length) nextIndex = this.playerIdList.length - 1
       if (nextIndex < 0) nextIndex = 0
