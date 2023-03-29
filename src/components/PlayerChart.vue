@@ -1,7 +1,7 @@
 <template>
-    <div class="playerChart" ref="container">
-        <Scatter :data="chart" :options="chartOptions" />
-    </div>
+  <div class="playerChart" ref="container">
+    <Scatter :data="chart" :options="chartOptions" />
+  </div>
 </template>
 
 <script lang="ts">
@@ -40,7 +40,7 @@ export default defineComponent({
     colors () {
       // eslint-disable-next-line no-unused-expressions
       this.refreshColors
-      const colors = {} as {[key:string]:string}
+      const colors = {} as { [key: string]: string }
       if (this.$refs.container) {
         const style = getComputedStyle(this.$refs.container as Element)
         colors.fg = style.getPropertyValue('--foreground')
@@ -58,43 +58,30 @@ export default defineComponent({
         datasets: [
           {
             label: 'Players',
-            labels: [] as string[],
-            borderColor: [this.colors.fg],
-            backgroundColor: [this.colors.fg],
-            pointRadius: [1],
-            pointStyle: ['dot'],
-            hoverRadius: [4],
-            data: [] as {x:number, y:number}[]
+            labels: this.playerIdList || [] as string[],
+            borderColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
+            backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
+            pointRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 20 : 1,
+            pointStyle: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 'crossRot' : 'dot',
+            hoverRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 30 : 4,
+            data: [] as { x: number, y: number }[]
           }
         ]
       }
       if (!this.players) {
         return chartData
       }
-      chartData.datasets[0].labels = this.playerIdList
       chartData.datasets[0].data = this.playerIdList.map(e => {
         if (!this.players) {
           return { x: 0, y: 0 }
         }
         return { x: this.players[e].deaths, y: this.players[e].kills }
       })
-      chartData.datasets[0].pointRadius = Array(chartData.datasets[0].labels.length).fill(1)
-      chartData.datasets[0].pointStyle = Array(chartData.datasets[0].labels.length).fill('dot')
-      chartData.datasets[0].borderColor = Array(chartData.datasets[0].labels.length).fill(this.colors.cyan)
-      chartData.datasets[0].backgroundColor = chartData.datasets[0].borderColor
-      chartData.datasets[0].hoverRadius = Array(chartData.datasets[0].labels.length).fill(4)
-      if (this.$props.playerHighlighted) {
-        const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
-        chartData.datasets[0].pointRadius[index] = 20
-        chartData.datasets[0].pointStyle[index] = 'crossRot'
-        chartData.datasets[0].borderColor[index] = this.colors.orange
-        // No need to do that since arrays are already the same (reference)
-        // chartData.datasets[0].backgroundColor[index] = chartData.datasets[0].borderColor[index]
-        chartData.datasets[0].hoverRadius[index] = 30
-      }
       return chartData
     },
     chartOptions () {
+      // eslint-disable-next-line no-unused-expressions
+      this.$props.playerHighlighted
       const options = {
         responsive: true,
         maintainAspectRatio: true,
@@ -125,8 +112,8 @@ export default defineComponent({
         plugins: {
           tooltip: {
             callbacks: {
-              label: (ctx:any) => {
-                let label:string
+              label: (ctx: any) => {
+                let label: string
                 if (!this.players) {
                   label = ctx.dataset.labels[ctx.dataIndex]
                 } else {
@@ -140,24 +127,24 @@ export default defineComponent({
           annotation: {},
           legend: { display: false },
           datalabels: {
-            formatter: (value:any, context:any) => {
+            formatter: (value: any, context: any) => {
               return this.players[this.playerIdList[context.dataIndex]].username
             },
-            backgroundColor: Array(this.playerIdList.length).fill(null),
+            backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? this.colors.orange : null,
             borderColor: this.colors.fg,
-            borderWidth: Array(this.playerIdList.length).fill(0),
+            borderWidth: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 1 : 0,
             borderRadius: 5,
-            display: Array(this.playerIdList.length).fill('auto'),
+            display: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 'true' : 'auto',
             align: '-45',
             anchor: 'end',
             clamp: true,
-            color: Array(this.playerIdList.length).fill(this.colors.fg)
+            color: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? this.colors.bg : this.colors.fg
           }
         },
-        onClick: (e:Event, element:any) => {
+        onClick: (e: Event, element: any) => {
           this.$emit('highlightPlayer', element.length > 0 ? this.playerIdList[element[0].index] : undefined)
         },
-        onHover: (e:any, element:any) => {
+        onHover: (e: any, element: any) => {
           if (!e.native.target) return
           (e.native.target as HTMLElement).style.cursor = element[0] ? 'pointer' : 'default'
         }
@@ -189,18 +176,10 @@ export default defineComponent({
           }
         }
       }
-
-      if (this.$props.playerHighlighted) {
-        const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
-        options.plugins.datalabels.display[index] = true
-        options.plugins.datalabels.backgroundColor[index] = this.colors.orange
-        options.plugins.datalabels.borderWidth[index] = 1
-        options.plugins.datalabels.color[index] = this.colors.bg
-      }
       return options
     },
-    players ():{[key:string]:Player} { return this.store.getters.getPlayerList(this.filters) || {} },
-    playerIdList ():string[] { return Object.keys(this.players) }
+    players (): { [key: string]: Player } { return this.store.getters.getPlayerList(this.filters) || {} },
+    playerIdList (): string[] { return Object.keys(this.players) }
 
   },
   data () {
@@ -216,9 +195,10 @@ export default defineComponent({
 canvas {
   background: var(--accent);
 }
+
 @media only screen and (max-width: 922px) {
-  canvas{
-    display:none !important
+  canvas {
+    display: none !important
   }
 }
 </style>
