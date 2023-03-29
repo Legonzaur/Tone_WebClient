@@ -117,7 +117,6 @@ export default defineComponent({
                 if (!this.sortedWeaponList) {
                   label = ctx.dataset.labels[ctx.dataIndex]
                 } else {
-                  console.log(this.sortedWeaponList)
                   label = this.sortedWeaponList[ctx.dataIndex]
                 }
                 label += ' (' + this.weapons[label].kills + ' kills)'
