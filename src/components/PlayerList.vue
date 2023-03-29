@@ -142,6 +142,7 @@ export default defineComponent({
 }
 
 .playerTable {
+  grid-area: list;
   margin-right: 1rem;
   overflow: auto;
   height: 100%;

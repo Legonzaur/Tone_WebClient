@@ -12,8 +12,8 @@
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="models.server" :options="servers"
-      :allow-empty="true" :custom-label="((e) => e.name)" @select="changeFilter({ server: $event.id })"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="models.server"
+      :options="servers" :allow-empty="true" :custom-label="((e) => e.name)" @select="changeFilter({ server: $event.id })"
       @remove="changeFilter({ server: '' })"></VueMultiselect>
 
     <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="models.weapon"
@@ -29,6 +29,7 @@
       :playerHighlighted="playerHighlighted"></PlayerList>
     <PlayerChart :filters="filters" v-on:highlight-player="playerHighlighted = $event"
       :playerHighlighted="playerHighlighted"></PlayerChart>
+    <PlayerInfo :filters="filters" :playerHighlighted="playerHighlighted"></PlayerInfo>
   </div>
 </template>
 
@@ -37,6 +38,7 @@ import { Store, useStore } from 'vuex'
 import { Player, Weapon, Server } from '@/store/index'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
+import PlayerInfo from '@/components/PlayerInfo.vue'
 import { defineComponent } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
@@ -44,7 +46,7 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 export default defineComponent({
   name: 'PlayerView',
   components: {
-    PlayerList, PlayerChart, VueMultiselect
+    PlayerList, PlayerChart, VueMultiselect, PlayerInfo
   },
 
   data () {
@@ -83,13 +85,15 @@ export default defineComponent({
     }
   },
   watch: {
-    test: function (newval) {
-      console.log(newval)
+    playerHighlighted: function (newval:string) {
+      this.fetchPlayerData({ player: newval, ...this.filters })
     }
   },
   methods: {
+    async fetchPlayerData ({ player, server }: { player?: string, server?:string }) {
+      if (!this.store.getters.getWeaponList({ player, server })) return await this.store.dispatch('fetchWeapons', { player, server })
+    },
     async changeFilter ({ weapon, server }: { weapon?: string, server?: string }) {
-      console.log(weapon)
       const filters = JSON.parse(JSON.stringify(this.filters))
       if (weapon !== undefined) filters.weapon = weapon
       if (server !== undefined) filters.server = server
@@ -98,6 +102,7 @@ export default defineComponent({
       const promises = []
       if (!this.store.getters.getPlayerList(filters)) promises.push(this.store.dispatch('fetchPlayers', filters))
       if (!this.store.getters.getWeaponList(filters)) promises.push(this.store.dispatch('fetchWeapons', filters))
+      promises.push(this.fetchPlayerData({ player: this.playerHighlighted, ...filters }))
       await Promise.all(promises)
       // Delay the update of filters propery after we fetch the data to the API as changing it will cause subcomponents to reload before data is fetched
       this.filters = filters
@@ -116,6 +121,9 @@ export default defineComponent({
   /* height:100%; */
   display: grid;
   overflow: auto;
+  grid-template-areas:
+    'list chart'
+    'list info';
   grid-template-columns: 50% 50%;
 }
 
@@ -125,11 +133,14 @@ export default defineComponent({
     /* height:100%; */
     display: grid;
     overflow: auto;
+    grid-template-areas:
+    'list list';
     grid-template-columns: 100%;
     width: calc(100vw - 1em);
     margin: 0 0rem 1rem 1rem;
   }
-  .multiselect{
+
+  .multiselect {
     width: calc(100% - 1em)
   }
 }
