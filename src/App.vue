@@ -3,8 +3,9 @@
     <nav>
       <!-- <div class="navbar-element">hamburger</div> -->
       <div class="navbar-element"><!--<span>logo&nbsp;</span>--->TONE&nbsp;API</div>
-      <div class="navbar-element"><a href="https://github.com/Legonzaur/Tone_WebClient">Github</a></div>
-      <div class="navbar-element"><a href="https://github.com/Legonzaur/ToneAPI_servermod">Northstar&nbsp;Server&nbsp;Mod</a></div>
+      <div class="navbar-element github-link"><a href="https://github.com/Legonzaur/Tone_WebClient">Github</a></div>
+      <div class="navbar-element github-link"><a
+          href="https://github.com/Legonzaur/ToneAPI_servermod">Northstar&nbsp;Server&nbsp;Mod</a></div>
       <div class="spacer"></div>
       <!-- <router-link to="/" class="navbar-element">Home</router-link>
       <router-link to="/about" class="navbar-element">About</router-link> -->
@@ -23,6 +24,11 @@
   --foreground: #f8f8f2;
   --orange: #ffb86c;
   --cyan: #8be9fd;
+  --green: #50fa7b;
+  --pink: #ff79c6;
+  --purple: #bd93f9;
+  --red: #ff5555;
+  --yellow: #f1fa8c;
 }
 
 body {
@@ -49,14 +55,19 @@ body {
 }
 
 @media only screen and (max-width: 922px) {
-  #app{
+  #app {
     grid-template-areas:
-    'header  header'
-    'filters filters'
-    'body body ';
+      'header  header'
+      'filters filters'
+      'body body ';
     grid-template-rows: auto auto 1fr;
   }
+}
 
+@media only screen and (max-width: 600px) {
+  .github-link{
+    display:none;
+  }
 }
 
 header {
@@ -88,7 +99,7 @@ nav a.router-link-exact-active {
   padding: 24px 32px;
 }
 
-.navbar-element:hover{
+.navbar-element:hover {
   background: var(--current-line)
 }
 

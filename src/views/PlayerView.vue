@@ -29,7 +29,7 @@
       :playerHighlighted="playerHighlighted"></PlayerList>
     <PlayerChart :filters="filters" v-on:highlight-player="playerHighlighted = $event"
       :playerHighlighted="playerHighlighted"></PlayerChart>
-    <PlayerInfo :filters="filters" :playerHighlighted="playerHighlighted"></PlayerInfo>
+    <WeaponChart :filters="{player: playerHighlighted, ...filters}" :playerHighlighted="playerHighlighted"></WeaponChart>
   </div>
 </template>
 
@@ -38,7 +38,7 @@ import { Store, useStore } from 'vuex'
 import { Player, Weapon, Server } from '@/store/index'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
-import PlayerInfo from '@/components/PlayerInfo.vue'
+import WeaponChart from '@/components/WeaponChart.vue'
 import { defineComponent } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
@@ -46,7 +46,7 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 export default defineComponent({
   name: 'PlayerView',
   components: {
-    PlayerList, PlayerChart, VueMultiselect, PlayerInfo
+    PlayerList, PlayerChart, VueMultiselect, WeaponChart
   },
 
   data () {
@@ -125,6 +125,7 @@ export default defineComponent({
     'list chart'
     'list info';
   grid-template-columns: 50% 50%;
+  grid-template-rows: 50% 50%;
 }
 
 @media only screen and (max-width: 922px) {
@@ -136,6 +137,7 @@ export default defineComponent({
     grid-template-areas:
     'list list';
     grid-template-columns: 100%;
+    grid-template-rows: 100%;
     width: calc(100vw - 1em);
     margin: 0 0rem 1rem 1rem;
   }
