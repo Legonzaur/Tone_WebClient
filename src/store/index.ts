@@ -13,6 +13,7 @@ export interface Player {
 }
 
 export interface Weapon {
+  id?:string,
   // eslint-disable-next-line camelcase
   max_kill_distance: number;
   // eslint-disable-next-line camelcase

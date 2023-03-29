@@ -26,7 +26,6 @@
 import { defineComponent } from 'vue'
 import { Player } from '@/store/index'
 import { useStore } from 'vuex'
-import { Vue } from 'vue-class-component'
 
 export default defineComponent({
   props: {
