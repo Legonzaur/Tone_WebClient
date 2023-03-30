@@ -86,23 +86,23 @@ export default defineComponent({
       // eslint-disable-next-line no-unused-expressions
       this.$props.playerHighlighted
       const options = {
-        responsive: false,
+        responsive: true,
         maintainAspectRatio: true,
         animation: { duration: 500 },
         layout: { autoPadding: false },
         plugins: {
           datalabels: {
-            formatter: (value:any, context:any) => {
+            formatter: (value: any, context: any) => {
               return this.sortedWeaponList[context.dataIndex]
             },
-            backgroundColor: (context:any) => {
+            backgroundColor: (context: any) => {
               return context.dataset.backgroundColor(context)
             },
             borderColor: this.colors.fg,
             borderRadius: 25,
             borderWidth: 2,
             color: this.colors.bg,
-            display: (context:any) => {
+            display: (context: any) => {
               return context.dataIndex === context.dataset.labels.length - 1 ? true : 'auto'
             },
             font: {
@@ -158,8 +158,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
-canvas {
-  background: var(--accent);
+.weaponChart {
+  width: calc(min(50vw, 50vh) - 3em);
+  height: calc(min(50vw, 50vh) - 3em);
 }
 
 @media only screen and (max-width: 922px) {
