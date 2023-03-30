@@ -1,5 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
-  publicPath: process.env.NODE_ENV === 'production' ? '/Tone_WebClient/' : '/'
+  publicPath: process.env.NODE_ENV === 'production' ? '/ToneAPI_webclient/' : '/'
 })
