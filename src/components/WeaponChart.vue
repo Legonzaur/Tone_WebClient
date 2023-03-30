@@ -86,7 +86,7 @@ export default defineComponent({
       // eslint-disable-next-line no-unused-expressions
       this.$props.playerHighlighted
       const options = {
-        responsive: true,
+        responsive: false,
         maintainAspectRatio: true,
         animation: { duration: 500 },
         layout: { autoPadding: false },
