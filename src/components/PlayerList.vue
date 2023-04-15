@@ -2,20 +2,24 @@
   <div class="playerTable" v-on:keydown="selectNextPlayer" tabindex="0">
     <div class="playerHeaders">
       <span></span>
-      <span v-on:click="sortPlayerList('username')" :class="sortingData.argument == 'username' ? 'selected' : ''">Username</span>
+      <span v-on:click="sortPlayerList('username')"
+        :class="sortingData.argument == 'username' ? 'selected' : ''">Username</span>
       <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
       <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
       <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
-      <span v-on:click="sortPlayerList('max_kill_distance')" :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max distance</span>
-      <span v-on:click="sortPlayerList('avg_kill_distance')" :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average distance</span>
+      <span v-on:click="sortPlayerList('max_kill_distance')"
+        :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max distance</span>
+      <span v-on:click="sortPlayerList('avg_kill_distance')"
+        :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <div :class="'playerRow ' + (playerId === $props.playerHighlighted ? 'selected' : '')" v-for="(playerId, index) in playerIdList" v-bind:key="playerId"
-      v-on:click="$emit('highlightPlayer', playerId)" :ref="`player:` + playerId">
-      <div><span>{{ index }}</span></div>
+    <div :class="'playerRow ' + (playerId === $props.playerHighlighted ? 'selected' : '')"
+      v-for="(playerId, index) in playerIdList" v-bind:key="playerId" v-on:click="$emit('highlightPlayer', playerId)"
+      :ref="`player:` + playerId">
+      <div><span>{{ index+1 }}</span></div>
       <div><span>{{ players[playerId].username }}</span></div>
       <div><span>{{ players[playerId].kills }}</span></div>
       <div><span>{{ players[playerId].deaths }}</span></div>
-      <div><span>{{ Math.round(players[playerId].kills / players[playerId].deaths * 100) / 100 }}</span></div>
+      <div><span>{{ Math.round(players[playerId].kills / Math.max(1, players[playerId].deaths) * 100) / 100 }}</span></div>
       <div><span>{{ players[playerId].max_kill_distance }}</span></div>
       <div><span>{{ Math.round(players[playerId].avg_kill_distance * 100) / 100 }}</span></div>
     </div>
@@ -81,8 +85,8 @@ export default defineComponent({
         }
         let varA, varB
         if (arg === 'k/d') {
-          varA = this.players[a].kills / this.players[a].deaths
-          varB = this.players[b].kills / this.players[b].deaths
+          varA = this.players[a].kills / Math.max(1, this.players[a].deaths)
+          varB = this.players[b].kills / Math.max(1, this.players[b].deaths)
         } else {
           varA = this.players[a][arg]
           varB = this.players[b][arg]
@@ -145,20 +149,22 @@ export default defineComponent({
   margin: 0;
   /* border: 2px solid transparent; */
   transition: border .25s;
-  height:2em;
-}
-.playerHeaders{
-  position:sticky;
-  top:0;
-  height:3em;
+  height: 2em;
 }
 
-.playerHeaders>span{
-  padding:.5em .8em 0 .25em;
+.playerHeaders {
+  position: sticky;
+  top: 0;
+  height: 3em;
 }
+
+.playerHeaders>span {
+  padding: .5em .8em 0 .25em;
+}
+
 .playerRow>div {
-  padding:.5em .8em 0 .25em;
-  overflow:hidden;
+  padding: .5em .8em 0 .25em;
+  overflow: hidden;
 }
 
 .playerHeaders,
@@ -181,17 +187,22 @@ export default defineComponent({
 }
 
 .playerHeaders>span:last-child {
-  width:100%;
+  width: 100%;
 }
 
 @media only screen and (max-width: 600px) {
-  .playerRow>div:nth-child(6), .playerHeaders>span:nth-child(6),.playerRow>div:nth-child(7), .playerHeaders>span:nth-child(7) {
-  display: none;
+
+  .playerRow>div:nth-child(6),
+  .playerHeaders>span:nth-child(6),
+  .playerRow>div:nth-child(7),
+  .playerHeaders>span:nth-child(7) {
+    display: none;
   }
+
   .playerRow,
-.playerHeaders{
-  grid-template-columns: 4ch 20ch 6ch 6ch 1fr;
-}
+  .playerHeaders {
+    grid-template-columns: 4ch 20ch 6ch 6ch 1fr;
+  }
 }
 
 .player span {
@@ -200,6 +211,4 @@ export default defineComponent({
 
 .selected {
   background: var(--comment) !important;
-}
-
-</style>
+}</style>
