@@ -12,16 +12,16 @@
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="models.server"
-      :options="servers" :allow-empty="true" :custom-label="((e) => e.name)" @select="changeFilter({ server: $event.id })"
-      @remove="changeFilter({ server: '' })"></VueMultiselect>
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="filters.server"
+      :options="sortedServerList" :allow-empty="true" :custom-label="((e:Server) => e)"
+      ></VueMultiselect>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="models.weapon"
-      :options="sortedWeaponList" :allow-empty="true" @select="changeFilter({ weapon: $event })"
-      @remove="changeFilter({ weapon: '' })"></VueMultiselect>
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="filters.weapon"
+      :options="sortedWeaponList" :allow-empty="true"
+      ></VueMultiselect>
 
     <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
-      :options="sortedPlayerList" :allow-empty="true" :custom-label="((e) => players[e]?.username)"></VueMultiselect>
+      :options="sortedPlayerList" :allow-empty="true" :custom-label="((e:string) => players[e]?.username)"></VueMultiselect>
   </div>
 
   <div id="playerView">
@@ -34,8 +34,7 @@
 </template>
 
 <script lang="ts">
-import { Store, useStore } from 'vuex'
-import { Player, Weapon, Server } from '@/store/index'
+import { Player, Weapon, Server, useKillStore, Filters } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
@@ -46,26 +45,54 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 export default defineComponent({
   name: 'PlayerView',
   components: {
-    PlayerList, PlayerChart, VueMultiselect, WeaponChart
+    VueMultiselect, PlayerList, PlayerChart, WeaponChart
   },
 
   data () {
     return {
-      models: {},
-      filters: { minKills: 100, minDeaths: 100 },
-      store: useStore(),
+      filters: {} as Filters,
+      store: useKillStore(),
       playerHighlighted: undefined
-    } as { filters: { weapon?: string, server?: string }, store: Store<any>, playerHighlighted?: string }
+    }
   },
   computed: {
-    servers (): Server[] { return this.store.state.servers },
-    weapons (): { [key: string]: Weapon } { return this.store.getters.getWeaponList(this.filters) },
+    servers (): { [key: string]: Server } {
+      const { server: _, player: _1, ...withoutServer } = this.filters
+      const data = this.store.getServerList(withoutServer)?.data
+      if (!data) {
+        this.store.fetchServers(withoutServer)
+        return {}
+      }
+      return data
+    },
+    weapons (): { [key: string]: Weapon } {
+      const { weapon: _, player: _1, ...withoutWeapons } = this.filters
+      const data = this.store.getWeaponList(withoutWeapons)?.data
+      if (!data) {
+        this.store.fetchWeapons(withoutWeapons)
+        return {}
+      }
+      return data
+    },
+    players (): { [key: string]: Player } {
+      const { player: _, ...withoutPlayers } = this.filters
+      const data = this.store.getPlayerList(withoutPlayers)?.data
+      if (!data) {
+        this.store.fetchPlayers(withoutPlayers)
+        return {}
+      }
+      return data
+    },
     sortedWeaponList (): string[] {
       if (!this.weapons) return []
       const weapons = Object.keys(this.weapons)
       return weapons.sort()
     },
-    players (): { [key: string]: Player } { return this.store.getters.getPlayerList(this.filters) },
+    sortedServerList ():string[] {
+      if (!this.servers) return []
+      const servers = Object.keys(this.servers)
+      return servers.sort()
+    },
     sortedPlayerList (): string[] {
       if (!this.players) return []
       const players = Object.keys(this.players)
@@ -73,7 +100,6 @@ export default defineComponent({
         if (!this.players) {
           return 0
         }
-
         if (this.players[a].username < this.players[b].username) {
           return -1
         }
@@ -82,30 +108,6 @@ export default defineComponent({
         }
         return 0
       })
-    }
-  },
-  watch: {
-    playerHighlighted: function (newval:string) {
-      this.fetchPlayerData({ player: newval, ...this.filters })
-    }
-  },
-  methods: {
-    async fetchPlayerData ({ player, server }: { player?: string, server?:string }) {
-      if (!this.store.getters.getWeaponList({ player, server })) return await this.store.dispatch('fetchWeapons', { player, server })
-    },
-    async changeFilter ({ weapon, server }: { weapon?: string, server?: string }) {
-      const filters = JSON.parse(JSON.stringify(this.filters))
-      if (weapon !== undefined) filters.weapon = weapon
-      if (server !== undefined) filters.server = server
-      if (weapon === '') delete filters.weapon
-      if (server === '') delete filters.server
-      const promises = []
-      if (!this.store.getters.getPlayerList(filters)) promises.push(this.store.dispatch('fetchPlayers', filters))
-      if (!this.store.getters.getWeaponList(filters)) promises.push(this.store.dispatch('fetchWeapons', filters))
-      promises.push(this.fetchPlayerData({ player: this.playerHighlighted, ...filters }))
-      await Promise.all(promises)
-      // Delay the update of filters propery after we fetch the data to the API as changing it will cause subcomponents to reload before data is fetched
-      this.filters = filters
     }
   }
 })

@@ -1,10 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import store from './store'
+import { createPinia } from 'pinia'
 
-createApp(App).use(store).use(router).mount('#app')
+const pinia = createPinia()
 
-store.dispatch('fetchServers', {})
-store.dispatch('fetchPlayers', {})
-store.dispatch('fetchWeapons', {})
+createApp(App).use(pinia).use(router).mount('#app')

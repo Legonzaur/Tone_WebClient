@@ -15,6 +15,20 @@
   <router-view />
 </template>
 
+<script lang="ts">
+import { Player, Weapon, Server, useKillStore } from '@/stores/kill'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  setup (props, ctx) {
+    const store = useKillStore()
+    store.fetchPlayers({})
+    store.fetchServers({})
+    store.fetchWeapons({})
+  }
+})
+</script>
+
 <style>
 :root {
   --bg-color: #282a36;

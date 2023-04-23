@@ -5,28 +5,18 @@
 </template>
 
 <script lang="ts">
-import {
-  Chart as ChartJS,
-  ArcElement,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend
-} from 'chart.js'
-import annotationPlugin from 'chartjs-plugin-annotation'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import dataLabel from 'chartjs-plugin-datalabels'
-import { Store, useStore } from 'vuex'
-import { Player, Weapon } from '@/store/index'
+import { Weapon, Filters, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
-import { defineComponent } from 'vue'
-import { functionExpression } from '@babel/types'
+import { defineComponent, PropType } from 'vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 
 export default defineComponent({
   name: 'PlayerChart',
   props: {
-    filters: Object,
+    filters: Object as PropType<Filters>,
     playerHighlighted: String
   },
   emits: ['highlightPlayer'],
@@ -35,6 +25,12 @@ export default defineComponent({
   },
   mounted () {
     this.refreshColors++
+  },
+  data: () => {
+    return {
+      store: useKillStore(),
+      refreshColors: 0
+    }
   },
   computed: {
     colors () {
@@ -59,14 +55,26 @@ export default defineComponent({
       return colors
     },
     chart () {
-      const colors = ['cyan', 'green', 'orange', 'pink', 'purple', 'red', 'yellow']
+      const colors = [
+        'cyan',
+        'green',
+        'orange',
+        'pink',
+        'purple',
+        'red',
+        'yellow'
+      ]
       const chartData = {
         datasets: [
           {
             label: 'Weapons',
-            labels: this.sortedWeaponList || [] as string[],
-            borderColor: (context: any) => this.colors.fg,
-            backgroundColor: (context: any) => { return this.colors[colors[(context.dataIndex * 3) % colors.length]] },
+            labels: this.sortedWeaponList || ([] as string[]),
+            borderColor: () => this.colors.fg,
+            backgroundColor: (context: any) => {
+              return this.colors[
+                colors[(context.dataIndex * 3) % colors.length]
+              ]
+            },
             data: [] as number[]
           }
         ]
@@ -74,7 +82,7 @@ export default defineComponent({
       if (!this.sortedWeaponList) {
         return chartData
       }
-      chartData.datasets[0].data = this.sortedWeaponList.map(e => {
+      chartData.datasets[0].data = this.sortedWeaponList.map((e) => {
         if (!this.weapons) {
           return 0
         }
@@ -103,10 +111,9 @@ export default defineComponent({
             borderWidth: 2,
             color: this.colors.bg,
             display: (context: any) => {
-              return context.dataIndex === context.dataset.labels.length - 1 ? true : 'auto'
-            },
-            font: {
-              weight: 'bold'
+              return context.dataIndex === context.dataset.labels.length - 1
+                ? true
+                : 'auto'
             },
             padding: 6
           },
@@ -124,13 +131,18 @@ export default defineComponent({
               }
             }
           }
-
         }
       }
       return options
     },
     weapons (): { [key: string]: Weapon } {
-      return this.store.getters.getWeaponList(this.filters)
+      const { weapon: _, ...withoutWeapon } = this.filters || {}
+      const data = this.store.getWeaponList(withoutWeapon)?.data
+      if (!data) {
+        this.store.fetchWeapons(withoutWeapon)
+        return {}
+      }
+      return data
     },
     sortedWeaponList (): string[] {
       if (!this.weapons) return []
@@ -146,13 +158,6 @@ export default defineComponent({
       })
       return weapons
     }
-
-  },
-  data () {
-    return {
-      store: useStore(),
-      refreshColors: 0
-    }
   }
 })
 </script>
@@ -165,7 +170,7 @@ export default defineComponent({
 
 @media only screen and (max-width: 922px) {
   canvas {
-    display: none !important
+    display: none !important;
   }
 }
 </style>

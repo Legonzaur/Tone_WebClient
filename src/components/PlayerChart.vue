@@ -1,5 +1,6 @@
 <template>
   <div class="playerChart" ref="container">
+    <!-- <Scatter :data="chart" :options="chartOptions" /> -->
     <Scatter :data="chart" :options="chartOptions" />
   </div>
 </template>
@@ -11,23 +12,33 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Legend
+  Legend,
+  CoreChartOptions,
+  PluginChartOptions,
+  ScaleChartOptions
 } from 'chart.js'
 import annotationPlugin from 'chartjs-plugin-annotation'
 import dataLabel from 'chartjs-plugin-datalabels'
-import { Store, useStore } from 'vuex'
-import { Player, Weapon } from '@/store/index'
+import { useKillStore, Player, Filters } from '@/stores/kill'
 
 import { Scatter } from 'vue-chartjs'
-import { defineComponent } from 'vue'
+import { defineComponent, PropType } from 'vue'
+import { ChartEvent } from 'chart.js/dist/core/core.plugins'
+import { _DeepPartialObject } from 'chart.js/dist/types/utils'
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annotationPlugin, dataLabel)
 
 export default defineComponent({
   name: 'PlayerChart',
   props: {
-    filters: Object,
+    filters: Object as PropType<Filters>,
     playerHighlighted: String
+  },
+  data: () => {
+    return {
+      store: useKillStore(),
+      refreshColors: 0
+    }
   },
   emits: ['highlightPlayer'],
   components: {
@@ -54,7 +65,7 @@ export default defineComponent({
       return colors
     },
     chart () {
-      const chartData = {
+      return {
         datasets: [
           {
             label: 'Players',
@@ -62,29 +73,33 @@ export default defineComponent({
             borderColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
             backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
             pointRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 20 : 1,
-            pointStyle: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 'crossRot' : 'dot',
+            pointStyle: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 'crossRot' : 'circle',
             hoverRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 30 : 4,
-            data: [] as { x: number, y: number }[]
+            data: this.playerIdList.map((id) => ({ y: this.players[id].kills, x: this.players[id].deaths }))
           }
         ]
       }
-      if (!this.players) {
-        return chartData
-      }
-      chartData.datasets[0].data = this.playerIdList.map(e => {
-        if (!this.players) {
-          return { x: 0, y: 0 }
-        }
-        return { x: this.players[e].deaths, y: this.players[e].kills }
-      })
-      return chartData
     },
-    chartOptions () {
+    chartOptions (): _DeepPartialObject<CoreChartOptions<'scatter'> & PluginChartOptions<'scatter'> & ScaleChartOptions<'scatter'>> {
       // eslint-disable-next-line no-unused-expressions
       this.$props.playerHighlighted
-      const options = {
+      let endX = 0
+      let endY = 0
+      if (this.players) {
+        const maxX = Math.max(...Object.values(this.players).map(e => e.deaths))
+        const maxY = Math.max(...Object.values(this.players).map(e => e.kills))
+
+        if (maxY > maxX) {
+          endX = maxX
+          endY = (maxX / maxY) * maxY
+        } else {
+          endY = maxY
+          endX = (maxY / maxX) * maxX
+        }
+      }
+      return {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         animation: { duration: 500 },
         layout: { autoPadding: false },
         scales: {
@@ -124,7 +139,20 @@ export default defineComponent({
               }
             }
           },
-          annotation: {},
+          annotation: {
+            annotations: {
+              line: {
+                type: 'line',
+                yMin: 0,
+                xMin: 0,
+                yMax: endY,
+                xMax: endX,
+                borderWidth: 2,
+                borderColor: this.colors.orange,
+                borderDash: [1, 5]
+              }
+            }
+          },
           legend: { display: false },
           datalabels: {
             formatter: (value: any, context: any) => {
@@ -135,13 +163,13 @@ export default defineComponent({
             borderWidth: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 1 : 0,
             borderRadius: 5,
             display: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 'true' : 'auto',
-            align: '-45',
+            align: -45,
             anchor: 'end',
             clamp: true,
             color: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? this.colors.bg : this.colors.fg
           }
         },
-        onClick: (e: Event, element: any) => {
+        onClick: (e: ChartEvent, element: any) => {
           this.$emit('highlightPlayer', element.length > 0 ? this.playerIdList[element[0].index] : undefined)
         },
         onHover: (e: any, element: any) => {
@@ -149,44 +177,23 @@ export default defineComponent({
           (e.native.target as HTMLElement).style.cursor = element[0] ? 'pointer' : 'default'
         }
       }
-      if (!this.players) {
-        return options
-      }
-      const maxX = Math.max(...Object.values(this.players).map(e => e.deaths))
-      const maxY = Math.max(...Object.values(this.players).map(e => e.kills))
-      let endX, endY
-      if (maxY > maxX) {
-        endX = maxX
-        endY = (maxX / maxY) * maxY
-      } else {
-        endY = maxY
-        endX = (maxY / maxX) * maxX
-      }
-      options.plugins.annotation = {
-        annotations: {
-          line: {
-            type: 'line',
-            yMin: 0,
-            xMin: 0,
-            yMax: endY,
-            xMax: endX,
-            borderWidth: 2,
-            borderColor: this.colors.orange,
-            borderDash: [1, 5]
-          }
-        }
-      }
-      return options
     },
-    players (): { [key: string]: Player } { return this.store.getters.getPlayerList(this.filters) || {} },
+    players (): { [key: string]: Player } {
+      const data = this.store.getPlayerList(this.filters || {})?.data
+      if (!data) return {}
+      const cut = Object.entries(data).sort((a, b) => {
+        if (a[1].kills < b[1].kills) {
+          return 1
+        }
+        if (a[1].kills > b[1].kills) {
+          return -1
+        }
+        return 0
+      }).slice(0, 200)
+      return Object.fromEntries(cut)
+    },
     playerIdList (): string[] { return Object.keys(this.players) }
 
-  },
-  data () {
-    return {
-      store: useStore(),
-      refreshColors: 0
-    }
   }
 })
 </script>

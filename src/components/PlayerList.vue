@@ -7,10 +7,10 @@
       <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
       <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
       <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
-      <span v-on:click="sortPlayerList('max_kill_distance')"
-        :class="sortingData.argument == 'max_kill_distance' ? 'selected' : ''">max distance</span>
-      <span v-on:click="sortPlayerList('avg_kill_distance')"
-        :class="sortingData.argument == 'avg_kill_distance' ? 'selected' : ''">average distance</span>
+      <span v-on:click="sortPlayerList('max_distance')"
+        :class="sortingData.argument == 'max_distance' ? 'selected' : ''">max distance</span>
+      <span v-on:click="sortPlayerList('avg_distance')"
+        :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
     <div :class="'playerRow ' + (playerId === $props.playerHighlighted ? 'selected' : '')"
       v-for="(playerId, index) in playerIdList" v-bind:key="playerId" v-on:click="$emit('highlightPlayer', playerId)"
@@ -20,32 +20,34 @@
       <div><span>{{ players[playerId].kills }}</span></div>
       <div><span>{{ players[playerId].deaths }}</span></div>
       <div><span>{{ Math.round(players[playerId].kills / Math.max(1, players[playerId].deaths) * 100) / 100 }}</span></div>
-      <div><span>{{ players[playerId].max_kill_distance }}</span></div>
-      <div><span>{{ Math.round(players[playerId].avg_kill_distance * 100) / 100 }}</span></div>
+      <div><span>{{ players[playerId].max_distance }}</span></div>
+      <div><span>{{ Math.round(((players[playerId].total_distance / players[playerId].kills) || 0) * 100) / 100 }}</span></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { Player } from '@/store/index'
-import { useStore } from 'vuex'
+import { defineComponent, PropType } from 'vue'
+import { useKillStore, Player, Filters } from '@/stores/kill'
 
 export default defineComponent({
   props: {
-    filters: Object,
+    filters: { type: Object as PropType<Filters>, default: () => ({}) },
     playerHighlighted: String
   },
   emits: ['highlightPlayer'],
   data () {
     return {
-      sortingData: { direction: -1, argument: 'kills' as keyof Player | 'k/d' },
+      sortingData: { direction: -1, argument: 'kills' as keyof Player | 'k/d' | 'avg_distance' },
       playerIdList: [] as string[],
-      store: useStore()
+      store: useKillStore()
     }
   },
   computed: {
-    players (): { [key: string]: Player } { return this.store.getters.getPlayerList(this.filters) }
+    players (): { [key: string]: Player } {
+      const { player: _, ...withoutPlayer } = this.filters
+      return this.store.getPlayerList(withoutPlayer)?.data || {}
+    }
   },
   watch: {
     players: {
@@ -55,12 +57,13 @@ export default defineComponent({
         this.sortingData.direction *= -1
         this.playerIdList = Object.keys(newval)
         this.sortPlayerList(this.sortingData.argument)
+        this.playerIdList = this.playerIdList.slice(0, 500)
       },
       immediate: true
     },
     playerHighlighted (newval) {
       const newElement = this.$refs['player:' + newval] as HTMLElement[]
-      newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (newElement && newElement[0]) { newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) }
     }
   },
   updated () {
@@ -69,7 +72,7 @@ export default defineComponent({
     element[0].scrollIntoView({ behavior: 'smooth', block: 'center' })
   },
   methods: {
-    sortPlayerList (arg: ((keyof Player) | 'k/d')) {
+    sortPlayerList (arg: ((keyof Player) | 'k/d' | 'avg_distance')) {
       if (arg === this.sortingData.argument) {
         this.sortingData.direction *= -1
       } else {
@@ -87,11 +90,14 @@ export default defineComponent({
         if (arg === 'k/d') {
           varA = this.players[a].kills / Math.max(1, this.players[a].deaths)
           varB = this.players[b].kills / Math.max(1, this.players[b].deaths)
+        } else if (arg === 'avg_distance') {
+          varA = (this.players[a].total_distance / this.players[a].kills) || 0
+          varB = (this.players[b].total_distance / this.players[b].kills) || 0
         } else {
           varA = this.players[a][arg]
           varB = this.players[b][arg]
         }
-
+        if (varA === undefined || varB === undefined) return 0
         if (varA < varB) {
           return -1 * this.sortingData.direction
         }
@@ -136,13 +142,14 @@ export default defineComponent({
   margin-right: 1rem;
   overflow: auto;
   height: 100%;
+  user-select: none;
 }
 
 .playerRow,
 .playerHeaders {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 4ch 20ch 6ch 6ch 6ch 10ch 1fr;
+  grid-template-columns: 5ch 20ch 6ch 6ch 6ch 10ch 1fr;
   background: var(--bg-color);
   text-align: left;
   cursor: pointer;
@@ -201,7 +208,7 @@ export default defineComponent({
 
   .playerRow,
   .playerHeaders {
-    grid-template-columns: 4ch 20ch 6ch 6ch 1fr;
+    grid-template-columns: 5ch 20ch 6ch 6ch 1fr;
   }
 }
 
