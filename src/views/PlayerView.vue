@@ -12,11 +12,11 @@
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="filters.server"
-      :options="sortedServerList" :allow-empty="true" :custom-label="((e:Server) => e)"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="model.server"
+      :options="groupedServers" group-values="servers" group_label="id" :group-select="false" :allow-empty="true" :multiple="false" :custom-label="((e:any) => e.name)" track-by="name" label="name"
       ></VueMultiselect>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="filters.weapon"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon"
       :options="sortedWeaponList" :allow-empty="true"
       ></VueMultiselect>
 
@@ -50,6 +50,7 @@ export default defineComponent({
 
   data () {
     return {
+      model: { server: undefined, weapon: undefined } as unknown as {weapon:Weapon | Weapon[], server: (Server& {name?:string}) | (Server& {name?:string})[]},
       filters: {} as Filters,
       store: useKillStore(),
       playerHighlighted: undefined
@@ -64,6 +65,14 @@ export default defineComponent({
         return {}
       }
       return data
+    },
+    groupedServers () {
+      const hosts = [] as {id:string, servers:(Server& {name?:string})[] }[]
+      Object.entries(this.servers).forEach((e) => {
+        if (!hosts.find(host => host.id === e[1].host + 'sfdsdfsd')) hosts.push({ id: e[1].host + 'sfdsdfsd', servers: [] as Server[] })
+        hosts.find(host => host.id === e[1].host + 'sfdsdfsd')?.servers.push({ name: e[0], ...e[1] })
+      })
+      return hosts
     },
     weapons (): { [key: string]: Weapon } {
       const { weapon: _, player: _1, ...withoutWeapons } = this.filters
@@ -108,6 +117,15 @@ export default defineComponent({
         }
         return 0
       })
+    }
+  },
+  watch: {
+    model: {
+      handler (newModel) {
+        this.filters.server = newModel.server?.name
+        this.filters.weapon = newModel.weapon
+      },
+      deep: true
     }
   }
 })
