@@ -79,7 +79,7 @@ export const useKillStore = defineStore('kill', {
     async fetchPlayers (filter: Filters) {
       filter = removeNullEntries(filter)
       const response = await fetch(
-        'https://tone.sleepycat.date/v2_test/client/players?' +
+        'https://tone.sleepycat.date/v2/client/players?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
       )
       const data = await response.json()
@@ -90,7 +90,7 @@ export const useKillStore = defineStore('kill', {
     async fetchWeapons (filter: Filters) {
       filter = removeNullEntries(filter)
       const response = await fetch(
-        'https://tone.sleepycat.date/v2_test/client/weapons?' +
+        'https://tone.sleepycat.date/v2/client/weapons?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
       )
       const data = await response.json()
@@ -101,7 +101,7 @@ export const useKillStore = defineStore('kill', {
     async fetchServers (filter: Filters) {
       filter = removeNullEntries(filter)
       const response = await fetch(
-        'https://tone.sleepycat.date/v2_test/client/servers?' +
+        'https://tone.sleepycat.date/v2/client/servers?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
       )
       const data = await response.json()
