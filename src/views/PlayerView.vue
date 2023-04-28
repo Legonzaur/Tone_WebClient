@@ -16,7 +16,7 @@
       :options="groupedServers" group-values="servers" group_label="id" :group-select="false" :allow-empty="true" :multiple="false" :custom-label="((e:any) => e.name)" track-by="name" label="name"
       ></VueMultiselect>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon"
+    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon" :custom-label="((e:any) => weaponLocale[e] || e)"
       :options="sortedWeaponList" :allow-empty="true"
       ></VueMultiselect>
 
@@ -41,6 +41,7 @@ import WeaponChart from '@/components/WeaponChart.vue'
 import { defineComponent } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+import weapons from '../stores/weapons.json'
 
 export default defineComponent({
   name: 'PlayerView',
@@ -53,7 +54,8 @@ export default defineComponent({
       model: { server: undefined, weapon: undefined } as unknown as {weapon:Weapon | Weapon[], server: (Server& {name?:string}) | (Server& {name?:string})[]},
       filters: {} as Filters,
       store: useKillStore(),
-      playerHighlighted: undefined
+      playerHighlighted: undefined,
+      weaponLocale: weapons as {[key:string]:string}
     }
   },
   computed: {

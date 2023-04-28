@@ -10,6 +10,7 @@ import dataLabel from 'chartjs-plugin-datalabels'
 import { Weapon, Filters, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
 import { defineComponent, PropType } from 'vue'
+import weapons from '../stores/weapons.json'
 
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 
@@ -101,7 +102,9 @@ export default defineComponent({
         plugins: {
           datalabels: {
             formatter: (value: any, context: any) => {
-              return this.sortedWeaponList[context.dataIndex]
+              const weaponId = this.sortedWeaponList[context.dataIndex]
+              if (!(weapons as {[key:string]:string})[weaponId]) console.log(weaponId)
+              return (weapons as {[key:string]:string})[weaponId] || weaponId
             },
             backgroundColor: (context: any) => {
               return context.dataset.backgroundColor(context)
