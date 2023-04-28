@@ -179,8 +179,8 @@ export default defineComponent({
       }
     },
     players (): { [key: string]: Player } {
-      const data = this.store.getPlayerList(this.filters || {})?.data
-      if (!data) return {}
+      const data = this.store.getPlayerList(this.filters || {})?.value.data
+      if (!data) return this.store.fetchPlayers(this.filters || {}).value.data
       const cut = Object.entries(data).sort((a, b) => {
         if (a[1].kills < b[1].kills) {
           return 1

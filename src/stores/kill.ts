@@ -1,10 +1,22 @@
 import { defineStore } from 'pinia'
 import * as assert from 'assert'
+import { Ref, ref } from 'vue'
 
-function removeNullEntries (a:any) {
-  return Object.fromEntries(Object.entries(a).filter(e => e[1] !== undefined && e[1] !== null))
+export interface Filters {
+  server?: string;
+  player?: string;
+  weapon?: string;
+  host?: string;
+  map?: string;
+  gamemode?: string;
 }
-function objectEqual (a:any, b:any) {
+
+function removeNullEntries (a: Filters) {
+  return Object.fromEntries(
+    Object.entries(a).filter((e) => e[1] !== undefined && e[1] !== null)
+  )
+}
+function objectEqual (a: Filters, b: Filters) {
   try {
     a = removeNullEntries(a)
     b = removeNullEntries(b)
@@ -13,14 +25,6 @@ function objectEqual (a:any, b:any) {
   } catch {
     return false
   }
-}
-export interface Filters {
-  server?: string;
-  player?: string;
-  weapon?: string;
-  host?: string;
-  map?: string;
-  gamemode?: string;
 }
 
 export interface Kill {
@@ -53,11 +57,11 @@ export interface Server extends Kill {
 
 // define your typings for the store state
 export interface State {
-  servers: KillData<Server>[];
-  players: KillData<Player>[];
-  weapons: KillData<Weapon>[];
-  maps: KillData<Kill>[];
-  gamemodes: KillData<Kill>[];
+  servers: Ref<KillData<Server>>[];
+  players: Ref<KillData<Player>>[];
+  weapons: Ref<KillData<Weapon>>[];
+  maps: Ref<KillData<Kill>>[];
+  gamemodes: Ref<KillData<Kill>>[];
   hosts: { [key: number]: string };
 }
 
@@ -71,43 +75,63 @@ export const useKillStore = defineStore('kill', {
     hosts: {}
   }),
   getters: {
-    getPlayerList: (state) => (filters: Filters) => state.players.find((e) => objectEqual(e.filter, filters)),
-    getWeaponList: (state) => (filters: Filters) => state.weapons.find((e) => objectEqual(e.filter, filters)),
-    getServerList: (state) => (filters: Filters) => state.servers.find((e) => objectEqual(e.filter, filters))
+    getPlayerList: (state) => (filters: Filters) => {
+      return state.players.find((e) => objectEqual(e.value.filter, filters))
+    },
+    getWeaponList: (state) => (filters: Filters) =>
+      state.weapons.find((e) => objectEqual(e.value.filter, filters)),
+    getServerList: (state) => (filters: Filters) =>
+      state.servers.find((e) => objectEqual(e.value.filter, filters))
   },
   actions: {
-    async fetchPlayers (filter: Filters) {
+    fetchPlayers (filter: Filters) {
       filter = removeNullEntries(filter)
-      const response = await fetch(
+      let entry = this.players.find((e) => objectEqual(e.value.filter, filter))
+      if (entry === undefined) {
+        entry = ref({ filter, data: {} })
+        this.players.push(entry)
+      }
+      fetch(
         'https://tone.sleepycat.date/v2/client/players?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
-      )
-      const data = await response.json()
-      const entry = this.players.find((e) => objectEqual(e.filter, filter))
-      if (!entry) return this.players.push({ filter, data })
-      entry.data = data
+      ).then(async response => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        entry!.value.data = await response.json()
+      })
+      return entry
     },
-    async fetchWeapons (filter: Filters) {
+    fetchWeapons (filter: Filters) {
       filter = removeNullEntries(filter)
-      const response = await fetch(
+      let entry = this.weapons.find((e) => objectEqual(e.value.filter, filter))
+      if (!entry) {
+        entry = ref({ filter, data: {} })
+        this.weapons.push(entry)
+      }
+
+      fetch(
         'https://tone.sleepycat.date/v2/client/weapons?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
-      )
-      const data = await response.json()
-      const entry = this.weapons.find((e) => objectEqual(e.filter, filter))
-      if (!entry) return this.weapons.push({ filter, data })
-      entry.data = data
+      ).then(async response => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        entry!.value.data = await response.json()
+      })
+      return entry
     },
-    async fetchServers (filter: Filters) {
+    fetchServers (filter: Filters) {
       filter = removeNullEntries(filter)
-      const response = await fetch(
+      let entry = this.servers.find((e) => objectEqual(e.value.filter, filter))
+      if (!entry) {
+        entry = ref({ filter, data: {} })
+        this.servers.push(entry)
+      }
+      fetch(
         'https://tone.sleepycat.date/v2/client/servers?' +
           new URLSearchParams(filter as Record<keyof Filters, string>)
-      )
-      const data = await response.json()
-      const entry = this.servers.find((e) => objectEqual(e.filter, filter))
-      if (!entry) return this.servers.push({ filter, data })
-      entry.data = data
+      ).then(async response => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        entry!.value.data = await response.json()
+      })
+      return entry
     }
   }
 })

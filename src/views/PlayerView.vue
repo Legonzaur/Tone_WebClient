@@ -58,12 +58,10 @@ export default defineComponent({
   },
   computed: {
     servers (): { [key: string]: Server } {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { server: _, player: _1, ...withoutServer } = this.filters
-      const data = this.store.getServerList(withoutServer)?.data
-      if (!data) {
-        this.store.fetchServers(withoutServer)
-        return {}
-      }
+      const data = this.store.getServerList(withoutServer)?.value.data
+      if (!data) return this.store.fetchServers(withoutServer).value.data
       return data
     },
     groupedServers () {
@@ -75,21 +73,17 @@ export default defineComponent({
       return hosts
     },
     weapons (): { [key: string]: Weapon } {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { weapon: _, player: _1, ...withoutWeapons } = this.filters
-      const data = this.store.getWeaponList(withoutWeapons)?.data
-      if (!data) {
-        this.store.fetchWeapons(withoutWeapons)
-        return {}
-      }
+      const data = this.store.getWeaponList(withoutWeapons)?.value.data
+      if (!data) return this.store.fetchWeapons(withoutWeapons).value.data
       return data
     },
     players (): { [key: string]: Player } {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayers } = this.filters
-      const data = this.store.getPlayerList(withoutPlayers)?.data
-      if (!data) {
-        this.store.fetchPlayers(withoutPlayers)
-        return {}
-      }
+      const data = this.store.getPlayerList(withoutPlayers)?.value.data
+      if (!data) return this.store.fetchPlayers(withoutPlayers).value.data
       return data
     },
     sortedWeaponList (): string[] {

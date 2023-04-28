@@ -46,7 +46,9 @@ export default defineComponent({
   computed: {
     players (): { [key: string]: Player } {
       const { player: _, ...withoutPlayer } = this.filters
-      return this.store.getPlayerList(withoutPlayer)?.data || {}
+      const data = this.store.getPlayerList(withoutPlayer)?.value.data
+      if (!data) return this.store.fetchPlayers(withoutPlayer).value.data
+      return data
     }
   },
   watch: {

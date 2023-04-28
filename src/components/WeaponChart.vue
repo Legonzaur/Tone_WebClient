@@ -137,11 +137,8 @@ export default defineComponent({
     },
     weapons (): { [key: string]: Weapon } {
       const { weapon: _, ...withoutWeapon } = this.filters || {}
-      const data = this.store.getWeaponList(withoutWeapon)?.data
-      if (!data) {
-        this.store.fetchWeapons(withoutWeapon)
-        return {}
-      }
+      const data = this.store.getWeaponList(withoutWeapon)?.value.data
+      if (!data) return this.store.fetchWeapons(withoutWeapon).value.data
       return data
     },
     sortedWeaponList (): string[] {
