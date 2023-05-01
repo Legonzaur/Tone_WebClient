@@ -28,7 +28,7 @@
         label="name"
       >
       </VueMultiselect>
-      <button @click="model.server = undefined">X</button>
+      <button @click="model.server = undefined" :disabled="!model.server">X</button>
     </span>
 
     <span class="multiselect-wrapper">
@@ -42,7 +42,7 @@
         :allow-empty="true"
       >
       </VueMultiselect>
-      <button @click="model.weapon = undefined">X</button>
+      <button @click="model.weapon = undefined" :disabled="!model.weapon">X</button>
     </span>
 
     <span class="multiselect-wrapper">
@@ -56,7 +56,7 @@
         :allow-empty="true"
         :custom-label="((e: Player) => e?.username)"
       ></VueMultiselect>
-      <button @click="playerHighlighted = undefined">X</button>
+      <button @click="playerHighlighted = undefined" :disabled="!playerHighlighted">X</button>
     </span>
   </div>
 
