@@ -17,7 +17,7 @@ import {
   PluginChartOptions,
   ScaleChartOptions
 } from 'chart.js'
-import annotationPlugin from 'chartjs-plugin-annotation'
+import annotationPlugin, { AnnotationPluginOptions } from 'chartjs-plugin-annotation'
 import dataLabel from 'chartjs-plugin-datalabels'
 import { useKillStore, Player, Filters } from '@/stores/kill'
 
@@ -37,7 +37,8 @@ export default defineComponent({
   data: () => {
     return {
       store: useKillStore(),
-      refreshColors: 0
+      refreshColors: 0,
+      playerData: []
     }
   },
   emits: ['highlightPlayer'],
@@ -48,6 +49,15 @@ export default defineComponent({
     this.refreshColors++
   },
   computed: {
+    playerList (): (Player & {id:string})[] {
+      const data = this.store.getPlayerList(this.filters || {})?.value.data
+      if (!data) return Object.entries(this.store.fetchPlayers(this.filters || {}).value.data).map(e => ({ id: e[0], ...e[1] }))
+      const cut = Object.entries(data).map(e => ({ id: e[0], ...e[1] }))
+      cut.sort((a, b) => {
+        return b.kills - a.kills
+      })
+      return cut.slice(0, 200)
+    },
     colors () {
       // eslint-disable-next-line no-unused-expressions
       this.refreshColors
@@ -64,39 +74,35 @@ export default defineComponent({
       }
       return colors
     },
+
     chart () {
+      const playerIndex = this.playerList.findIndex(e => e.id === this.$props.playerHighlighted)
+      const defaultColor = this.colors.cyan
+      const borderColor = new Array(this.playerList.length).fill(defaultColor)
+      borderColor[playerIndex] = this.colors.orange
+      const backgroundColor = borderColor
+      const pointRadius = new Array(this.playerList.length).fill(1)
+      pointRadius[playerIndex] = 20
+      const hoverRadius = new Array(this.playerList.length).fill(4)
+      hoverRadius[playerIndex] = 30
+      const pointStyle = new Array(this.playerList.length).fill('circle')
+      pointStyle[playerIndex] = 'crossRot'
       return {
         datasets: [
           {
             label: 'Players',
-            labels: this.playerIdList || [] as string[],
-            borderColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
-            backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? this.colors.orange : this.colors.cyan,
-            pointRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 20 : 1,
-            pointStyle: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 'crossRot' : 'circle',
-            hoverRadius: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.index]) ? 30 : 4,
-            data: this.playerIdList.map((id) => ({ y: this.players[id].kills, x: this.players[id].deaths }))
+            labels: this.playerList.map(e => e.id) || [] as string[],
+            borderColor,
+            backgroundColor,
+            pointRadius,
+            pointStyle,
+            hoverRadius,
+            data: this.playerList.map((player) => ({ y: player.kills, x: player.deaths }))
           }
         ]
       }
     },
-    chartOptions (): _DeepPartialObject<CoreChartOptions<'scatter'> & PluginChartOptions<'scatter'> & ScaleChartOptions<'scatter'>> {
-      // eslint-disable-next-line no-unused-expressions
-      this.$props.playerHighlighted
-      let endX = 0
-      let endY = 0
-      if (this.players) {
-        const maxX = Math.max(...Object.values(this.players).map(e => e.deaths))
-        const maxY = Math.max(...Object.values(this.players).map(e => e.kills))
-
-        if (maxY > maxX) {
-          endX = maxX
-          endY = (maxX / maxY) * maxY
-        } else {
-          endY = maxY
-          endX = (maxY / maxX) * maxX
-        }
-      }
+    chartStaticOptions () {
       return {
         responsive: true,
         maintainAspectRatio: false,
@@ -124,53 +130,8 @@ export default defineComponent({
             }
           }
         },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: (ctx: any) => {
-                let label: string
-                if (!this.players) {
-                  label = ctx.dataset.labels[ctx.dataIndex]
-                } else {
-                  label = this.players[ctx.dataset.labels[ctx.dataIndex]].username
-                }
-                label += ' (' + ctx.parsed.y + ' kills ' + ctx.parsed.x + ' deaths)'
-                return label
-              }
-            }
-          },
-          annotation: {
-            annotations: {
-              line: {
-                type: 'line',
-                yMin: 0,
-                xMin: 0,
-                yMax: endY,
-                xMax: endX,
-                borderWidth: 2,
-                borderColor: this.colors.orange,
-                borderDash: [1, 5]
-              }
-            }
-          },
-          legend: { display: false },
-          datalabels: {
-            formatter: (value: any, context: any) => {
-              return this.players[this.playerIdList[context.dataIndex]].username
-            },
-            backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? this.colors.orange : null,
-            borderColor: this.colors.fg,
-            borderWidth: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 1 : 0,
-            borderRadius: 5,
-            display: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? 'true' : 'auto',
-            align: -45,
-            anchor: 'end',
-            clamp: true,
-            color: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerIdList[context.dataIndex]) ? this.colors.bg : this.colors.fg
-          }
-        },
         onClick: (e: ChartEvent, element: any) => {
-          this.$emit('highlightPlayer', element.length > 0 ? this.playerIdList[element[0].index] : undefined)
+          this.$emit('highlightPlayer', element.length > 0 ? this.playerList[element[0].index].id : undefined)
         },
         onHover: (e: any, element: any) => {
           if (!e.native.target) return
@@ -178,22 +139,76 @@ export default defineComponent({
         }
       }
     },
-    players (): { [key: string]: Player } {
-      const data = this.store.getPlayerList(this.filters || {})?.value.data
-      if (!data) return this.store.fetchPlayers(this.filters || {}).value.data
-      const cut = Object.entries(data).sort((a, b) => {
-        if (a[1].kills < b[1].kills) {
-          return 1
+    chartStaticPlugins () {
+      let endX = 0
+      let endY = 0
+      if (this.playerList) {
+        const maxX = Math.max(...this.playerList.map(e => e.deaths))
+        const maxY = Math.max(...this.playerList.map(e => e.kills))
+        if (maxY > maxX) {
+          endX = maxX
+          endY = (maxX / maxY) * maxY
+        } else {
+          endY = maxY
+          endX = (maxY / maxX) * maxX
         }
-        if (a[1].kills > b[1].kills) {
-          return -1
-        }
-        return 0
-      }).slice(0, 200)
-      return Object.fromEntries(cut)
+      }
+      return {
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              let label: string
+              if (!this.playerList) {
+                label = ctx.dataset.labels[ctx.dataIndex]
+              } else {
+                label = this.playerList[ctx.dataIndex].username
+              }
+              label += ' (' + ctx.parsed.y + ' kills ' + ctx.parsed.x + ' deaths)'
+              return label
+            }
+          }
+        },
+        annotation: {
+          annotations: {
+            line: {
+              type: 'line',
+              yMin: 0,
+              xMin: 0,
+              yMax: endY,
+              xMax: endX,
+              borderWidth: 2,
+              borderColor: this.colors.orange,
+              borderDash: [1, 5]
+            }
+          }
+        } as _DeepPartialObject<AnnotationPluginOptions>,
+        legend: { display: false }
+      }
     },
-    playerIdList (): string[] { return Object.keys(this.players) }
-
+    chartOptions (): _DeepPartialObject<CoreChartOptions<'scatter'> & PluginChartOptions<'scatter'> & ScaleChartOptions<'scatter'>> {
+      // eslint-disable-next-line no-unused-expressions
+      this.$props.playerHighlighted
+      return {
+        ...this.chartStaticOptions,
+        plugins: {
+          ...this.chartStaticPlugins,
+          datalabels: {
+            formatter: (value: any, context: any) => {
+              return this.playerList[context.dataIndex].username
+            },
+            backgroundColor: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerList[context.dataIndex].id) ? this.colors.orange : null,
+            borderColor: this.colors.fg,
+            borderWidth: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerList[context.dataIndex].id) ? 1 : 0,
+            borderRadius: 5,
+            display: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerList[context.dataIndex].id) ? 'true' : 'auto',
+            align: -45,
+            anchor: 'end',
+            clamp: true,
+            color: (context: any) => (this.$props.playerHighlighted && this.$props.playerHighlighted === this.playerList[context.dataIndex].id) ? this.colors.bg : this.colors.fg
+          }
+        }
+      }
+    }
   }
 })
 </script>
