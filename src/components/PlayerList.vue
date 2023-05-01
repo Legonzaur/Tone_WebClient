@@ -39,7 +39,6 @@ export default defineComponent({
   data () {
     return {
       sortingData: { direction: -1, argument: 'kills' as keyof Player | 'k/d' | 'avg_distance' },
-      playerIdList: [] as string[],
       store: useKillStore()
     }
   },
@@ -115,11 +114,11 @@ export default defineComponent({
       if (!this.$props.playerHighlighted) return
       if (!Object.keys(values).includes(e.key)) return
       e.preventDefault()
-      const index = this.playerIdList.indexOf(this.$props.playerHighlighted)
+      const index = this.playerList.findIndex(e => e.id === this.$props.playerHighlighted)
       let nextIndex = (index + values[e.key])
-      if (nextIndex >= this.playerIdList.length) nextIndex = this.playerIdList.length - 1
+      if (nextIndex >= this.playerList.length) nextIndex = this.playerList.length - 1
       if (nextIndex < 0) nextIndex = 0
-      this.$emit('highlightPlayer', this.playerIdList[nextIndex])
+      this.$emit('highlightPlayer', this.playerList[nextIndex].id)
     },
     updateSort (argument:string) {
       if (this.sortingData.argument === argument) {
