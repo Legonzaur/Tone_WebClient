@@ -138,6 +138,13 @@ export default defineComponent({
 .multiselect {
   margin: 0 .5em 1em .5em;
 }
+.multiselect-wrapper{
+  display: flex;
+}
+.multiselect-wrapper button{
+  margin: 0 0 1em 0;
+  font-size: 16px;
+}
 
 #playerView {
   margin: 0 1rem 1rem 1rem;
@@ -158,7 +165,7 @@ export default defineComponent({
     display: grid;
     overflow: auto;
     grid-template-areas:
-    'list list';
+      'list list';
     grid-template-columns: 100%;
     grid-template-rows: 100%;
     width: calc(100vw - 1em);
@@ -167,6 +174,12 @@ export default defineComponent({
 
   .multiselect {
     width: calc(100% - 1em)
+  }
+  .playerChart{
+    display:none;
+  }
+  .weaponChart{
+    display:none;
   }
 }
 
