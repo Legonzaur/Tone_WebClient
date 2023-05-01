@@ -27,7 +27,7 @@
   <div id="playerView">
     <PlayerList :filters="filters" v-on:highlightPlayer="highlight_player"
       :playerHighlighted="playerHighlighted?.id"></PlayerList>
-    <PlayerChart :filters="filters" v-on:highlight-player="highlight_player"
+    <PlayerChart :filters="filters" v-on:highlightPlayer="highlight_player"
       :playerHighlighted="playerHighlighted?.id"></PlayerChart>
     <WeaponChart :filters="{player: playerHighlighted?.id, ...filters}" :playerHighlighted="playerHighlighted?.id"></WeaponChart>
   </div>
@@ -124,7 +124,11 @@ export default defineComponent({
   methods: {
     highlight_player (playerid:string) {
       const player = this.players[playerid]
-      if (player) this.playerHighlighted = { id: playerid, ...player }
+      if (player) {
+        this.playerHighlighted = { id: playerid, ...player }
+        return
+      }
+      this.playerHighlighted = undefined
     }
   }
 })
