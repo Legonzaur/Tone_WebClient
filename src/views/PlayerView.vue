@@ -20,7 +20,7 @@
       :options="sortedWeaponList" :allow-empty="true"
       ></VueMultiselect>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
+    <VueMultiselect :options-limit="20" selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
       :options="sortedPlayerList" :allow-empty="true" :custom-label="((e:Player) => e?.username)"></VueMultiselect>
   </div>
 
