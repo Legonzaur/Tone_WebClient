@@ -103,7 +103,7 @@ export default defineComponent({
           datalabels: {
             formatter: (value: any, context: any) => {
               const weaponId = this.sortedWeaponList[context.dataIndex]
-              if (!(weapons as {[key:string]:string})[weaponId]) console.log(weaponId)
+              // if (!(weapons as {[key:string]:string})[weaponId]) console.log(weaponId)
               return (weapons as {[key:string]:string})[weaponId] || weaponId
             },
             backgroundColor: (context: any) => {

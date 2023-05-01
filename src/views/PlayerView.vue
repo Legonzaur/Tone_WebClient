@@ -21,15 +21,15 @@
       ></VueMultiselect>
 
     <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
-      :options="sortedPlayerList" :allow-empty="true" :custom-label="((e:string) => players[e]?.username)"></VueMultiselect>
+      :options="sortedPlayerList" :allow-empty="true" :custom-label="((e:Player) => e?.username)"></VueMultiselect>
   </div>
 
   <div id="playerView">
-    <PlayerList :filters="filters" v-on:highlight-player="playerHighlighted = $event"
-      :playerHighlighted="playerHighlighted"></PlayerList>
-    <PlayerChart :filters="filters" v-on:highlight-player="playerHighlighted = $event"
-      :playerHighlighted="playerHighlighted"></PlayerChart>
-    <WeaponChart :filters="{player: playerHighlighted, ...filters}" :playerHighlighted="playerHighlighted"></WeaponChart>
+    <PlayerList :filters="filters" v-on:highlightPlayer="highlight_player"
+      :playerHighlighted="playerHighlighted?.id"></PlayerList>
+    <PlayerChart :filters="filters" v-on:highlight-player="highlight_player"
+      :playerHighlighted="playerHighlighted?.id"></PlayerChart>
+    <WeaponChart :filters="{player: playerHighlighted?.id, ...filters}" :playerHighlighted="playerHighlighted?.id"></WeaponChart>
   </div>
 </template>
 
@@ -54,7 +54,7 @@ export default defineComponent({
       model: { server: undefined, weapon: undefined } as unknown as {weapon:Weapon | Weapon[], server: (Server& {name?:string}) | (Server& {name?:string})[]},
       filters: {} as Filters,
       store: useKillStore(),
-      playerHighlighted: undefined,
+      playerHighlighted: undefined as (Player & {id:string}) | undefined,
       weaponLocale: weapons as {[key:string]:string}
     }
   },
@@ -98,17 +98,14 @@ export default defineComponent({
       const servers = Object.keys(this.servers)
       return servers.sort()
     },
-    sortedPlayerList (): string[] {
+    sortedPlayerList (): Player[] {
       if (!this.players) return []
-      const players = Object.keys(this.players)
-      return players.sort((a: string, b: string) => {
-        if (!this.players) {
-          return 0
-        }
-        if (this.players[a].username < this.players[b].username) {
+      const players = Object.entries(this.players).map(e => ({ id: e[0], ...e[1] }))
+      return players.sort((a: Player, b: Player) => {
+        if (a.username < b.username) {
           return -1
         }
-        if (this.players[a].username > this.players[b].username) {
+        if (a.username > b.username) {
           return 1
         }
         return 0
@@ -122,6 +119,12 @@ export default defineComponent({
         this.filters.weapon = newModel.weapon
       },
       deep: true
+    }
+  },
+  methods: {
+    highlight_player (playerid:string) {
+      const player = this.players[playerid]
+      if (player) this.playerHighlighted = { id: playerid, ...player }
     }
   }
 })

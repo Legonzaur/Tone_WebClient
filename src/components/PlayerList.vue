@@ -2,26 +2,26 @@
   <div class="playerTable" v-on:keydown="selectNextPlayer" tabindex="0">
     <div class="playerHeaders">
       <span></span>
-      <span v-on:click="sortPlayerList('username')"
+      <span v-on:click="updateSort('username')"
         :class="sortingData.argument == 'username' ? 'selected' : ''">Username</span>
-      <span v-on:click="sortPlayerList('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
-      <span v-on:click="sortPlayerList('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
-      <span v-on:click="sortPlayerList('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
-      <span v-on:click="sortPlayerList('max_distance')"
+      <span v-on:click="updateSort('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
+      <span v-on:click="updateSort('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
+      <span v-on:click="updateSort('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
+      <span v-on:click="updateSort('max_distance')"
         :class="sortingData.argument == 'max_distance' ? 'selected' : ''">max distance</span>
-      <span v-on:click="sortPlayerList('avg_distance')"
+      <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <div :class="'playerRow ' + (playerId === $props.playerHighlighted ? 'selected' : '')"
-      v-for="(playerId, index) in playerIdList" v-bind:key="playerId" v-on:click="$emit('highlightPlayer', playerId)"
-      :ref="`player:` + playerId">
+    <div :class="'playerRow ' + (player.id === $props.playerHighlighted ? 'selected' : '')"
+      v-for="(player, index) in playerList" v-bind:key="player.id" v-on:click="$emit('highlightPlayer', player.id)"
+      :ref="`player:` + player.id">
       <div><span>{{ index+1 }}</span></div>
-      <div><span>{{ players[playerId].username }}</span></div>
-      <div><span>{{ players[playerId].kills }}</span></div>
-      <div><span>{{ players[playerId].deaths }}</span></div>
-      <div><span>{{ Math.round(players[playerId].kills / Math.max(1, players[playerId].deaths) * 100) / 100 }}</span></div>
-      <div><span>{{ players[playerId].max_distance }}</span></div>
-      <div><span>{{ Math.round(((players[playerId].total_distance / players[playerId].kills) || 0) * 100) / 100 }}</span></div>
+      <div><span>{{ player.username }}</span></div>
+      <div><span>{{ player.kills }}</span></div>
+      <div><span>{{ player.deaths }}</span></div>
+      <div><span>{{ Math.round(player.kills / Math.max(1, player.deaths) * 100) / 100 }}</span></div>
+      <div><span>{{ player.max_distance }}</span></div>
+      <div><span>{{ Math.round(((player.total_distance / player.kills) || 0) * 100) / 100 }}</span></div>
     </div>
   </div>
 </template>
@@ -49,17 +49,44 @@ export default defineComponent({
       const data = this.store.getPlayerList(withoutPlayer)?.value.data
       if (!data) return this.store.fetchPlayers(withoutPlayer).value.data
       return data
+    },
+    playerList ():(Player & {id:string})[] {
+      if (!this.players) return []
+      let players = Object.entries(this.players).map(e => ({ id: e[0], ...e[1] }))
+
+      if (this.sortingData.argument === 'username') {
+        const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
+        players.sort((a: Player, b: Player) => {
+          return collator.compare(a.username, b.username)
+        })
+      } else if (this.sortingData.argument === 'k/d') {
+        players.sort((a: Player, b: Player) => {
+          return a.kills / Math.max(1, a.deaths) - b.kills / Math.max(1, b.deaths)
+        })
+      } else if (this.sortingData.argument === 'avg_distance') {
+        players.sort((a: Player, b: Player) => {
+          return ((a.total_distance / a.kills) || 0) - ((b.total_distance / b.kills) || 0)
+        })
+      } else {
+        const argument = this.sortingData.argument
+        players.sort((a: Player, b: Player) => {
+          return a[argument] - b[argument]
+        })
+      }
+
+      if (this.sortingData.direction < 0) {
+        players.reverse()
+      }
+
+      players = players.slice(0, 500)
+      return players
     }
   },
   watch: {
     players: {
       handler (newval: { [key: string]: Player }): void {
         if (!newval) return
-        this.playerIdList = []
         this.sortingData.direction *= -1
-        this.playerIdList = Object.keys(newval)
-        this.sortPlayerList(this.sortingData.argument)
-        this.playerIdList = this.playerIdList.slice(0, 500)
       },
       immediate: true
     },
@@ -74,41 +101,6 @@ export default defineComponent({
     element[0].scrollIntoView({ behavior: 'smooth', block: 'center' })
   },
   methods: {
-    sortPlayerList (arg: ((keyof Player) | 'k/d' | 'avg_distance')) {
-      if (arg === this.sortingData.argument) {
-        this.sortingData.direction *= -1
-      } else {
-        if (arg === 'username') {
-          this.sortingData.direction = 1
-        }
-      }
-      this.sortingData.argument = arg
-
-      this.playerIdList.sort((a: string, b: string) => {
-        if (!this.players) {
-          return 0
-        }
-        let varA, varB
-        if (arg === 'k/d') {
-          varA = this.players[a].kills / Math.max(1, this.players[a].deaths)
-          varB = this.players[b].kills / Math.max(1, this.players[b].deaths)
-        } else if (arg === 'avg_distance') {
-          varA = (this.players[a].total_distance / this.players[a].kills) || 0
-          varB = (this.players[b].total_distance / this.players[b].kills) || 0
-        } else {
-          varA = this.players[a][arg]
-          varB = this.players[b][arg]
-        }
-        if (varA === undefined || varB === undefined) return 0
-        if (varA < varB) {
-          return -1 * this.sortingData.direction
-        }
-        if (varA > varB) {
-          return 1 * this.sortingData.direction
-        }
-        return 0
-      })
-    },
     selectNextPlayer (e: KeyboardEvent) {
       const values = {
         Home: -Infinity,
@@ -128,6 +120,14 @@ export default defineComponent({
       if (nextIndex >= this.playerIdList.length) nextIndex = this.playerIdList.length - 1
       if (nextIndex < 0) nextIndex = 0
       this.$emit('highlightPlayer', this.playerIdList[nextIndex])
+    },
+    updateSort (argument:string) {
+      if (this.sortingData.argument === argument) {
+        this.sortingData.direction *= -1
+      } else {
+        this.sortingData.direction = -1
+      }
+      this.sortingData.argument = argument as typeof this.sortingData.argument
     }
   }
 

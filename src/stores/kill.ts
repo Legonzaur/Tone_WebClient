@@ -43,7 +43,7 @@ export interface KillData<T extends Kill> {
 export interface Player extends Kill {
   username: string;
   // eslint-disable-next-line camelcase
-  deaths_while_equipped?: number;
+  // deaths_while_equipped?: number;
 }
 
 export interface Weapon extends Kill {
