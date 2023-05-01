@@ -11,25 +11,36 @@
       <option></option>
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
+    <span class="multiselect-wrapper">
+      <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="model.server"
+        :options="groupedServers" group-values="servers" group_label="id" :group-select="false" :allow-empty="true"
+        :multiple="false" :custom-label="((e: any) => e.name)" track-by="name" label="name">
+      </VueMultiselect>
+      <button @click="model.server = undefined">X</button>
+    </span>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="model.server"
-      :options="groupedServers" group-values="servers" group_label="id" :group-select="false" :allow-empty="true" :multiple="false" :custom-label="((e:any) => e.name)" track-by="name" label="name"
-      ></VueMultiselect>
+    <span class="multiselect-wrapper">
+      <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon"
+        :custom-label="((e: any) => weaponLocale[e] || e)" :options="sortedWeaponList" :allow-empty="true">
+      </VueMultiselect>
+      <button @click="model.weapon = undefined">X</button>
+    </span>
 
-    <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon" :custom-label="((e:any) => weaponLocale[e] || e)"
-      :options="sortedWeaponList" :allow-empty="true"
-      ></VueMultiselect>
-
-    <VueMultiselect :options-limit="20" selectLabel="" deselectLabel="remove" placeholder="Search player" v-model="playerHighlighted"
-      :options="sortedPlayerList" :allow-empty="true" :custom-label="((e:Player) => e?.username)"></VueMultiselect>
+    <span class="multiselect-wrapper">
+      <VueMultiselect :options-limit="20" selectLabel="" deselectLabel="remove" placeholder="Search player"
+        v-model="playerHighlighted" :options="sortedPlayerList" :allow-empty="true"
+        :custom-label="((e: Player) => e?.username)"></VueMultiselect>
+      <button @click="playerHighlighted = undefined">X</button>
+    </span>
   </div>
 
   <div id="playerView">
-    <PlayerList :filters="filters" v-on:highlightPlayer="highlight_player"
-      :playerHighlighted="playerHighlighted?.id"></PlayerList>
-    <PlayerChart :filters="filters" v-on:highlightPlayer="highlight_player"
-      :playerHighlighted="playerHighlighted?.id"></PlayerChart>
-    <WeaponChart :filters="{player: playerHighlighted?.id, ...filters}" :playerHighlighted="playerHighlighted?.id"></WeaponChart>
+    <PlayerList :filters="filters" v-on:highlightPlayer="highlight_player" :playerHighlighted="playerHighlighted?.id">
+    </PlayerList>
+    <PlayerChart :filters="filters" v-on:highlightPlayer="highlight_player" :playerHighlighted="playerHighlighted?.id">
+    </PlayerChart>
+    <WeaponChart :filters="{ player: playerHighlighted?.id, ...filters }" :playerHighlighted="playerHighlighted?.id">
+    </WeaponChart>
   </div>
 </template>
 
@@ -51,11 +62,11 @@ export default defineComponent({
 
   data () {
     return {
-      model: { server: undefined, weapon: undefined } as unknown as {weapon:Weapon | Weapon[], server: (Server& {name?:string}) | (Server& {name?:string})[]},
+      model: { server: undefined, weapon: undefined } as unknown as { weapon: Weapon | Weapon[] | undefined, server: (Server & { name?: string }) | (Server & { name?: string })[] | undefined },
       filters: {} as Filters,
       store: useKillStore(),
-      playerHighlighted: undefined as (Player & {id:string}) | undefined,
-      weaponLocale: weapons as {[key:string]:string}
+      playerHighlighted: undefined as (Player & { id: string }) | undefined,
+      weaponLocale: weapons as { [key: string]: string }
     }
   },
   computed: {
@@ -67,7 +78,7 @@ export default defineComponent({
       return data
     },
     groupedServers () {
-      const hosts = [] as {id:string, servers:(Server& {name?:string})[] }[]
+      const hosts = [] as { id: string, servers: (Server & { name?: string })[] }[]
       Object.entries(this.servers).forEach((e) => {
         if (!hosts.find(host => host.id === e[1].host + 'sfdsdfsd')) hosts.push({ id: e[1].host + 'sfdsdfsd', servers: [] as Server[] })
         hosts.find(host => host.id === e[1].host + 'sfdsdfsd')?.servers.push({ name: e[0], ...e[1] })
@@ -93,7 +104,7 @@ export default defineComponent({
       const weapons = Object.keys(this.weapons)
       return weapons.sort()
     },
-    sortedServerList ():string[] {
+    sortedServerList (): string[] {
       if (!this.servers) return []
       const servers = Object.keys(this.servers)
       return servers.sort()
@@ -122,7 +133,7 @@ export default defineComponent({
     }
   },
   methods: {
-    highlight_player (playerid:string) {
+    highlight_player (playerid: string) {
       const player = this.players[playerid]
       if (player) {
         this.playerHighlighted = { id: playerid, ...player }
