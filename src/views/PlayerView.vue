@@ -12,34 +12,71 @@
       <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
     </select> -->
     <span class="multiselect-wrapper">
-      <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select server" v-model="model.server"
-        :options="groupedServers" group-values="servers" group_label="id" :group-select="false" :allow-empty="true"
-        :multiple="false" :custom-label="((e: any) => e.name)" track-by="name" label="name">
+      <VueMultiselect
+        selectLabel=""
+        deselectLabel="remove"
+        placeholder="Select server"
+        v-model="model.server"
+        :options="groupedServers"
+        group-values="servers"
+        group_label="id"
+        :group-select="false"
+        :allow-empty="true"
+        :multiple="false"
+        :custom-label="((e: any) => e.name)"
+        track-by="name"
+        label="name"
+      >
       </VueMultiselect>
       <button @click="model.server = undefined">X</button>
     </span>
 
     <span class="multiselect-wrapper">
-      <VueMultiselect selectLabel="" deselectLabel="remove" placeholder="Select weapon" v-model="model.weapon"
-        :custom-label="((e: any) => weaponLocale[e] || e)" :options="sortedWeaponList" :allow-empty="true">
+      <VueMultiselect
+        selectLabel=""
+        deselectLabel="remove"
+        placeholder="Select weapon"
+        v-model="model.weapon"
+        :custom-label="((e: any) => weaponLocale[e] || e)"
+        :options="sortedWeaponList"
+        :allow-empty="true"
+      >
       </VueMultiselect>
       <button @click="model.weapon = undefined">X</button>
     </span>
 
     <span class="multiselect-wrapper">
-      <VueMultiselect :options-limit="20" selectLabel="" deselectLabel="remove" placeholder="Search player"
-        v-model="playerHighlighted" :options="sortedPlayerList" :allow-empty="true"
-        :custom-label="((e: Player) => e?.username)"></VueMultiselect>
+      <VueMultiselect
+        :options-limit="20"
+        selectLabel=""
+        deselectLabel="remove"
+        placeholder="Search player"
+        v-model="playerHighlighted"
+        :options="sortedPlayerList"
+        :allow-empty="true"
+        :custom-label="((e: Player) => e?.username)"
+      ></VueMultiselect>
       <button @click="playerHighlighted = undefined">X</button>
     </span>
   </div>
 
   <div id="playerView">
-    <PlayerList :filters="filters" v-on:highlightPlayer="highlight_player" :playerHighlighted="playerHighlighted?.id">
+    <PlayerList
+      :filters="filters"
+      v-on:highlightPlayer="highlight_player"
+      :playerHighlighted="playerHighlighted?.id"
+    >
     </PlayerList>
-    <PlayerChart :filters="filters" v-on:highlightPlayer="highlight_player" :playerHighlighted="playerHighlighted?.id">
+    <PlayerChart
+      :filters="filters"
+      v-on:highlightPlayer="highlight_player"
+      :playerHighlighted="playerHighlighted?.id"
+    >
     </PlayerChart>
-    <WeaponChart :filters="{ player: playerHighlighted?.id, ...filters }" :playerHighlighted="playerHighlighted?.id">
+    <WeaponChart
+      :filters="{ player: playerHighlighted?.id, ...filters }"
+      :playerHighlighted="playerHighlighted?.id"
+    >
     </WeaponChart>
   </div>
 </template>
@@ -53,20 +90,35 @@ import { defineComponent } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import weapons from '../stores/weapons.json'
+import router from '@/router'
 
 export default defineComponent({
   name: 'PlayerView',
   components: {
-    VueMultiselect, PlayerList, PlayerChart, WeaponChart
+    VueMultiselect,
+    PlayerList,
+    PlayerChart,
+    WeaponChart
   },
 
   data () {
     return {
-      model: { server: undefined, weapon: undefined } as unknown as { weapon: Weapon | Weapon[] | undefined, server: (Server & { name?: string }) | (Server & { name?: string })[] | undefined },
+      model: { server: undefined, weapon: undefined } as unknown as {
+        weapon: string | undefined;
+        server: { name?: string } | (Server & { name?: string })[] | undefined;
+      },
       filters: {} as Filters,
       store: useKillStore(),
       playerHighlighted: undefined as (Player & { id: string }) | undefined,
       weaponLocale: weapons as { [key: string]: string }
+    }
+  },
+  created () {
+    let server
+    if (this.$route.query.server) server = { name: this.$route.query.server?.toString() }
+    this.model = {
+      server,
+      weapon: this.$route.query.weapon?.toString()
     }
   },
   computed: {
@@ -78,10 +130,15 @@ export default defineComponent({
       return data
     },
     groupedServers () {
-      const hosts = [] as { id: string, servers: (Server & { name?: string })[] }[]
+      const hosts = [] as {
+        id: string;
+        servers: (Server & { name?: string })[];
+      }[]
       Object.entries(this.servers).forEach((e) => {
-        if (!hosts.find(host => host.id === e[1].host + 'sfdsdfsd')) hosts.push({ id: e[1].host + 'sfdsdfsd', servers: [] as Server[] })
-        hosts.find(host => host.id === e[1].host + 'sfdsdfsd')?.servers.push({ name: e[0], ...e[1] })
+        if (!hosts.find((host) => host.id === e[1].host + 'sfdsdfsd')) { hosts.push({ id: e[1].host + 'sfdsdfsd', servers: [] as Server[] }) }
+        hosts
+          .find((host) => host.id === e[1].host + 'sfdsdfsd')
+          ?.servers.push({ name: e[0], ...e[1] })
       })
       return hosts
     },
@@ -111,7 +168,10 @@ export default defineComponent({
     },
     sortedPlayerList (): Player[] {
       if (!this.players) return []
-      const players = Object.entries(this.players).map(e => ({ id: e[0], ...e[1] }))
+      const players = Object.entries(this.players).map((e) => ({
+        id: e[0],
+        ...e[1]
+      }))
       return players.sort((a: Player, b: Player) => {
         if (a.username < b.username) {
           return -1
@@ -124,12 +184,47 @@ export default defineComponent({
     }
   },
   watch: {
+    players () {
+      const player = this.$route.query.player?.toString()
+      if (player && this.playerHighlighted?.id !== player) {
+        this.highlight_player(player)
+      }
+    },
     model: {
       handler (newModel) {
         this.filters.server = newModel.server?.name
         this.filters.weapon = newModel.weapon
       },
       deep: true
+    },
+    filters: {
+      handler (newValue) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { server: _, weapon: _2, ...withoutFilters } = this.$route.query
+        router.push({ query: { ...newValue, ...withoutFilters } }).then(e => { console.log(e) })
+      },
+      deep: true
+    },
+    playerHighlighted (newValue, oldValue) {
+      if (newValue?.id === oldValue?.id) return
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { player: _, ...withoutPlayer } = this.$route.query
+      router.push({ query: { player: newValue?.id, ...withoutPlayer } }).then(e => { console.log(e) })
+    },
+    '$route' (to) {
+      if (this.playerHighlighted?.id !== to.query.player) {
+        const playerId = to.query.player?.toString()
+        if (playerId) {
+          this.highlight_player(playerId)
+        }
+      }
+      if (this.filters.weapon !== to.query.weapon) {
+        this.model.weapon = to.query.weapon
+      }
+      if (this.filters.server !== to.query.server) {
+        if (to.query.server) this.model.server = { name: to.query.server }
+        else this.model.server = undefined
+      }
     }
   },
   methods: {
@@ -147,7 +242,7 @@ export default defineComponent({
 
 <style scoped>
 .multiselect {
-  margin: 0 .5em 1em .5em;
+  margin: 0 0.5em 1em 0.5em;
 }
 
 .multiselect-wrapper {
@@ -165,8 +260,8 @@ export default defineComponent({
   display: grid;
   overflow: auto;
   grid-template-areas:
-    'list chart'
-    'list info';
+    "list chart"
+    "list info";
   grid-template-columns: 50% 50%;
   grid-template-rows: 50% 50%;
 }
@@ -177,8 +272,7 @@ export default defineComponent({
     /* height:100%; */
     display: grid;
     overflow: auto;
-    grid-template-areas:
-      'list list';
+    grid-template-areas: "list list";
     grid-template-columns: 100%;
     grid-template-rows: 100%;
     width: calc(100vw - 1em);
@@ -186,11 +280,11 @@ export default defineComponent({
   }
 
   .multiselect-wrapper button {
-    margin: 0 .5em 1em 0;
+    margin: 0 0.5em 1em 0;
   }
 
   .multiselect {
-    width: calc(100% - 1em)
+    width: calc(100% - 1em);
   }
 
   .playerChart {
@@ -204,4 +298,5 @@ export default defineComponent({
 
 #filters {
   grid-area: filters;
-}</style>
+}
+</style>

@@ -82,16 +82,13 @@ export default defineComponent({
     }
   },
   watch: {
-    players: {
-      handler (newval: { [key: string]: Player }): void {
-        if (!newval) return
-        this.sortingData.direction *= -1
-      },
-      immediate: true
-    },
     playerHighlighted (newval) {
+      console.log('newVal')
       const newElement = this.$refs['player:' + newval] as HTMLElement[]
-      if (newElement && newElement[0]) { newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+      // Some hack because of some inconsistency
+      setTimeout(function () {
+        if (newElement && newElement[0]) { newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+      }, 0)
     }
   },
   updated () {
