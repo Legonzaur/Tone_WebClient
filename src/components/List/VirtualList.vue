@@ -47,7 +47,7 @@ export default defineComponent({
       this.vlistHeight = (this.$refs.vlist as HTMLElement)?.getBoundingClientRect().height || 0
     },
     highlighted (newVal) {
-      setTimeout(() => (this.$refs.vlist as HTMLElement)?.scrollBy({ top: ((this.list.findIndex(e => e.id === newVal)) * this.rowHeight) - ((this.$refs.vlist as HTMLElement))?.scrollTop - (this.vlistHeight / 2 - this.$props.rowHeight), behavior: 'smooth' }), 1)
+      if (newVal) setTimeout(() => (this.$refs.vlist as HTMLElement)?.scrollBy({ top: ((this.list.findIndex(e => e.id === newVal)) * this.rowHeight) - ((this.$refs.vlist as HTMLElement))?.scrollTop - (this.vlistHeight / 2 - this.$props.rowHeight), behavior: 'smooth' }), 1)
     }
   },
   methods: {
