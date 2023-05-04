@@ -20,11 +20,11 @@ import { Player, Weapon, Server, useKillStore } from '@/stores/kill'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  setup (props, ctx) {
-    const store = useKillStore()
+  setup () {
+    /* const store = useKillStore()
     store.fetchPlayers({})
     store.fetchServers({})
-    store.fetchWeapons({})
+    store.fetchWeapons({}) */
   }
 })
 </script>
