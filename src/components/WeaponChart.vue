@@ -9,7 +9,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import dataLabel from 'chartjs-plugin-datalabels'
 import { Weapon, Filters, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
-import { defineComponent, PropType, Ref, unref } from 'vue'
+import { defineComponent, PropType, Ref } from 'vue'
 import weapons from '../stores/weapons.json'
 
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)

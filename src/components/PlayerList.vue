@@ -7,13 +7,14 @@
       <span v-on:click="updateSort('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
       <span v-on:click="updateSort('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
       <span v-on:click="updateSort('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
-      <span v-on:click="updateSort('max_distance')"
-        :class="sortingData.argument == 'max_distance' ? 'selected' : ''">max distance</span>
+      <span v-on:click="updateSort('max_distance')" :class="sortingData.argument == 'max_distance' ? 'selected' : ''">max
+        distance</span>
       <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <div :class="'playerRow ' + (player.id === $props.playerHighlighted ? 'selected' : '')"
-      v-for="(player, index) in playerList" v-bind:key="player.id" v-on:click="$emit('highlightPlayer', player.id)"
+    <VirtualList :list="playerList" :row-height="32" @highlightPlayer="$emit('highlightPlayer', $event)" :highlighted="playerHighlighted"></VirtualList>
+    <!-- <div :class="'playerRow ' + (player.id === $props.playerHighlighted ? 'selected' : '')"
+       v-on:click="$emit('highlightPlayer', player.id)"
       :ref="`player:` + player.id">
       <div><span>{{ index+1 }}</span></div>
       <div><span>{{ player.value.username }}</span></div>
@@ -22,15 +23,17 @@
       <div><span>{{ Math.round(player.value.kills / Math.max(1, player.value.deaths) * 100) / 100 }}</span></div>
       <div><span>{{ player.value.max_distance }}</span></div>
       <div><span>{{ Math.round(((player.value.total_distance / player.value.kills) || 0) * 100) / 100 }}</span></div>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, Ref, toRaw, unref } from 'vue'
+import { defineComponent, PropType, Ref } from 'vue'
 import { useKillStore, Player, Filters } from '@/stores/kill'
+import VirtualList from './List/VirtualList.vue'
 
 export default defineComponent({
+  components: { VirtualList },
   props: {
     filters: { type: Object as PropType<Filters>, default: () => ({}) },
     playerHighlighted: String
@@ -44,45 +47,57 @@ export default defineComponent({
   },
   computed: {
     players (): { [key: string]: Ref<Player> } {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayer } = this.filters
       const data = this.store.getPlayerList(withoutPlayer)?.value.data
       if (!data) return this.store.fetchPlayers(withoutPlayer).value.data
       return data
     },
-    playerList ():(Ref<Player> & {id:string})[] {
+    playerList (): (Ref<Player> & { id: string })[] {
       if (!this.players) return []
-      let players = Object.entries(this.players).map(e => {
+      const players = Object.entries(this.players).map(e => {
         const target = {} as ProxyHandler<Ref<Player>>
-        const player = new Proxy(e[1], target) as Ref<Player> & {id:string}
+        const player = new Proxy(e[1], target) as Ref<Player> & { id: string }
         player.id = e[0]
         return player
-      }) as (Ref<Player> & {id:string})[]
+      }) as (Ref<Player> & { id: string })[]
 
+      const date = new Date()
       if (this.sortingData.argument === 'username') {
         const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
-        players.sort((a: Ref<Player>, b: Ref<Player>) => {
-          return collator.compare(toRaw(a.value).username, toRaw(b.value).username)
+        players.sort((a, b) => {
+          // Hack because toRaw is slow as fuck
+          const aVal = a._rawValue
+          const bVal = b._rawValue
+          return collator.compare(aVal.username, bVal.username)
         })
       } else if (this.sortingData.argument === 'k/d') {
-        players.sort((a: Ref<Player>, b: Ref<Player>) => {
-          return toRaw(a.value).kills / Math.max(1, toRaw(a.value).deaths) - toRaw(b.value).kills / Math.max(1, toRaw(b.value).deaths)
+        players.sort((a, b) => {
+          // Hack because toRaw is slow as fuck
+          const aVal = a._rawValue
+          const bVal = b._rawValue
+          return aVal.kills / Math.max(1, aVal.deaths) - bVal.kills / Math.max(1, bVal.deaths)
         })
       } else if (this.sortingData.argument === 'avg_distance') {
-        players.sort((a: Ref<Player>, b: Ref<Player>) => {
-          return ((toRaw(a.value).total_distance / toRaw(a.value).kills) || 0) - ((toRaw(b.value).total_distance / toRaw(b.value).kills) || 0)
+        players.sort((a, b) => {
+          // Hack because toRaw is slow as fuck
+          const aVal = a._rawValue
+          const bVal = b._rawValue
+          return ((aVal.total_distance / aVal.kills) || 0) - ((bVal.total_distance / bVal.kills) || 0)
         })
       } else {
         const argument = this.sortingData.argument
-        players.sort((a: Ref<Player>, b: Ref<Player>) => {
-          return toRaw(a.value)[argument] - toRaw(b.value)[argument]
+        players.sort((a, b) => {
+          // Hack because toRaw is slow as fuck
+          const aVal = a._rawValue
+          const bVal = b._rawValue
+          return aVal[argument] - bVal[argument]
         })
       }
-
+      console.log('Sorting the player object took + ' + ((new Date()).getTime() - date.getTime()) + 'ms')
       if (this.sortingData.direction < 0) {
         players.reverse()
       }
-
-      players = players.slice(0, 500)
       return players
     }
   },
@@ -120,7 +135,7 @@ export default defineComponent({
       if (nextIndex < 0) nextIndex = 0
       this.$emit('highlightPlayer', this.playerList[nextIndex].id)
     },
-    updateSort (argument:string) {
+    updateSort (argument: string) {
       if (this.sortingData.argument === argument) {
         this.sortingData.direction *= -1
       } else {
@@ -128,7 +143,7 @@ export default defineComponent({
       }
       this.sortingData.argument = argument as typeof this.sortingData.argument
     },
-    scrollToPlayer (playerid:string) {
+    scrollToPlayer (playerid: string) {
       const newElement = this.$refs['player:' + playerid] as HTMLElement[]
       // Some hack because of some inconsistency
       setTimeout(function () {
@@ -140,15 +155,14 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
-* {
+<style>
+.playerTable * {
   box-sizing: border-box;
 }
 
 .playerTable {
   grid-area: list;
   margin-right: 1rem;
-  overflow: auto;
   height: 100%;
   user-select: none;
 }
@@ -177,26 +191,14 @@ export default defineComponent({
   padding: .5em .8em 0 .25em;
 }
 
-.playerRow>div {
-  padding: .5em .8em 0 .25em;
-  overflow: hidden;
-}
-
-.playerHeaders,
-.playerRow:nth-child(2n) {
+.playerHeaders{
   background: var(--current-line);
 }
 
-.playerRow:nth-child(2n+1) {
-  background: var(--accent);
-}
-
-.playerHeaders div:hover,
-.playerRow:hover {
+.playerHeaders div:hover {
   background: var(--bg-color);
 }
 
-.playerRow>div:not(:last-child),
 .playerHeaders>div:not(:last-child) {
   border-right: solid var(--bg-color) 2px;
 }
@@ -226,4 +228,5 @@ export default defineComponent({
 
 .selected {
   background: var(--comment) !important;
-}</style>
+}
+</style>

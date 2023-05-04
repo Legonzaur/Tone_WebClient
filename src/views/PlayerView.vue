@@ -1,16 +1,5 @@
 <template>
   <div id="filters">
-    <!-- <input type="number" min="0" v-model="filters.minKills">
-    <input type="number" min="0" v-model="filters.minDeaths"> -->
-    <!-- <select v-on:change="changeFilter({ server: ($event.target as HTMLInputElement).value })">
-      <option></option>
-      <option v-for="(serverData) in servers" v-bind:key="serverData.id" :value="serverData.id">{{ serverData.name }}
-      </option>
-    </select>
-    <select v-on:change="changeFilter({ weapon: ($event.target as HTMLInputElement).value })">
-      <option></option>
-      <option v-for="weaponId in sortedWeaponList" v-bind:key="weaponId" :value="weaponId">{{ weaponId }}</option>
-    </select> -->
     <span class="multiselect-wrapper">
       <VueMultiselect
         selectLabel=""
@@ -67,6 +56,7 @@
       :playerHighlighted="playerHighlighted?.id"
     >
     </PlayerList>
+
     <PlayerChart
       :filters="filters"
       v-on:highlightPlayer="highlight_player"
@@ -86,7 +76,7 @@ import { Player, Weapon, Server, useKillStore, Filters } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
-import { Ref, defineComponent, toRaw, unref } from 'vue'
+import { Ref, defineComponent, unref } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import weapons from '../stores/weapons.json'
@@ -171,9 +161,9 @@ export default defineComponent({
       if (!this.players) return []
       const players = Object.entries(this.players).map((e) => ({
         id: e[0],
-        ...toRaw(e[1].value)
+        ...e[1]._rawValue
       }))
-      return players.sort((a: Player, b: Player) => {
+      return players.sort((a, b) => {
         if (a.username < b.username) {
           return -1
         }
@@ -202,7 +192,7 @@ export default defineComponent({
       handler (newValue) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { server: _, weapon: _2, ...withoutFilters } = this.$route.query
-        router.push({ query: { ...newValue, ...withoutFilters } }).then(e => { console.log(e) })
+        router.push({ query: { ...newValue, ...withoutFilters } })// .then(e => { console.log(e) })
       },
       deep: true
     },
@@ -210,7 +200,7 @@ export default defineComponent({
       if (newValue?.id === oldValue?.id) return
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayer } = this.$route.query
-      router.push({ query: { player: newValue?.id, ...withoutPlayer } }).then(e => { console.log(e) })
+      router.push({ query: { player: newValue?.id, ...withoutPlayer } })// .then(e => { console.log(e) })
     },
     '$route' (to) {
       if (this.playerHighlighted?.id !== to.query.player) {

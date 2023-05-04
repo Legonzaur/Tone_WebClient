@@ -16,16 +16,11 @@
 </template>
 
 <script lang="ts">
-import { Player, Weapon, Server, useKillStore } from '@/stores/kill'
+
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  setup () {
-    /* const store = useKillStore()
-    store.fetchPlayers({})
-    store.fetchServers({})
-    store.fetchWeapons({}) */
-  }
+
 })
 </script>
 

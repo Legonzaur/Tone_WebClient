@@ -23,8 +23,10 @@ const websocketData = {
   host: 1
 }
 
+// dev stuff
+
 const store = useKillStore()
-setInterval(() => {
+function registerWebSocketKill () {
   const allPlayerArrays = store.$state.players.filter((e) => {
     return (
       (!e.value.filter.server ||
@@ -106,4 +108,4 @@ setInterval(() => {
     unref(e.value.data[websocketData.cause_of_death]).kills++
     unref(e.value.data[websocketData.cause_of_death]).max_distance = Math.max(websocketData.distance, unref(e.value.data[websocketData.cause_of_death]).max_distance)
   })
-}, 100)
+}

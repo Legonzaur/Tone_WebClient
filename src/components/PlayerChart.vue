@@ -22,7 +22,7 @@ import dataLabel from 'chartjs-plugin-datalabels'
 import { useKillStore, Player, Filters } from '@/stores/kill'
 
 import { Scatter } from 'vue-chartjs'
-import { defineComponent, PropType, toRaw, unref } from 'vue'
+import { defineComponent, PropType, Ref, toRaw, triggerRef, unref } from 'vue'
 import { ChartEvent } from 'chart.js/dist/core/core.plugins'
 import { _DeepPartialObject } from 'chart.js/dist/types/utils'
 
@@ -74,7 +74,6 @@ export default defineComponent({
       }
       return colors
     },
-
     chart () {
       const playerIndex = this.playerList.findIndex(e => e.id === this.$props.playerHighlighted)
       const defaultColor = this.colors.cyan
@@ -132,6 +131,7 @@ export default defineComponent({
         },
         onClick: (e: ChartEvent, element: any) => {
           this.$emit('highlightPlayer', element.length > 0 ? this.playerList[element[0].index].id : undefined)
+          if (this.store.getPlayerList(this.filters || {}) !== undefined) triggerRef(this.store.getPlayerList(this.filters || {}) as unknown as Ref)
         },
         onHover: (e: any, element: any) => {
           if (!e.native.target) return
@@ -210,6 +210,11 @@ export default defineComponent({
       }
     }
   }
+  /* methods: {
+    refreshChart () {
+      if (this.store.getPlayerList(this.filters || {}) !== undefined) triggerRef(this.store.getPlayerList(this.filters || {}) as unknown as Ref)
+    }
+  } */
 })
 </script>
 
@@ -217,7 +222,14 @@ export default defineComponent({
 canvas {
   background: var(--accent);
 }
-
+.playerChart{
+  position:relative;
+}
+#refreshChart{
+  position:absolute;
+  top: 0;
+  left:0;
+}
 @media only screen and (max-width: 922px) {
   canvas {
     display: none !important
