@@ -9,7 +9,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import dataLabel from 'chartjs-plugin-datalabels'
 import { Weapon, Filters, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType, Ref, unref } from 'vue'
 import weapons from '../stores/weapons.json'
 
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
@@ -87,7 +87,7 @@ export default defineComponent({
         if (!this.weapons) {
           return 0
         }
-        return this.weapons[e].kills
+        return this.weapons[e].value.kills
       })
       return chartData
     },
@@ -129,7 +129,7 @@ export default defineComponent({
                 } else {
                   label = this.sortedWeaponList[ctx.dataIndex]
                 }
-                label += ' (' + this.weapons[label].kills + ' kills)'
+                label += ' (' + this.weapons[label].value.kills + ' kills)'
                 return label
               }
             }
@@ -138,7 +138,7 @@ export default defineComponent({
       }
       return options
     },
-    weapons (): { [key: string]: Weapon } {
+    weapons (): { [key: string]: Ref<Weapon> } {
       const { weapon: _, ...withoutWeapon } = this.filters || {}
       const data = this.store.getWeaponList(withoutWeapon)?.value.data
       if (!data) return this.store.fetchWeapons(withoutWeapon).value.data
@@ -148,10 +148,10 @@ export default defineComponent({
       if (!this.weapons) return []
       const weapons = Object.keys(this.weapons)
       weapons.sort((a, b) => {
-        if (Number(this.weapons[a].kills) < Number(this.weapons[b].kills)) {
+        if (Number(this.weapons[a].value.kills) < Number(this.weapons[b].value.kills)) {
           return -1
         }
-        if (Number(this.weapons[a].kills) > Number(this.weapons[b].kills)) {
+        if (Number(this.weapons[a].value.kills) > Number(this.weapons[b].value.kills)) {
           return 1
         }
         return 0

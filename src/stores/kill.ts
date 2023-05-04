@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import * as assert from 'assert'
-import { Ref, ref } from 'vue'
+import { Ref, reactive, ref, shallowRef, triggerRef, unref } from 'vue'
 
 export interface Filters {
   server?: string;
@@ -37,7 +37,7 @@ export interface Kill {
 }
 export interface KillData<T extends Kill> {
   filter: Filters;
-  data: { [key: string]: T };
+  data: { [key: string]: Ref<T> };
 }
 
 export interface Player extends Kill {
@@ -76,19 +76,19 @@ export const useKillStore = defineStore('kill', {
   }),
   getters: {
     getPlayerList: (state) => (filters: Filters) => {
-      return state.players.find((e) => objectEqual(e.value.filter, filters))
+      return state.players.find((e) => objectEqual(unref(e).filter, filters))
     },
     getWeaponList: (state) => (filters: Filters) =>
-      state.weapons.find((e) => objectEqual(e.value.filter, filters)),
+      state.weapons.find((e) => objectEqual(unref(e).filter, filters)),
     getServerList: (state) => (filters: Filters) =>
-      state.servers.find((e) => objectEqual(e.value.filter, filters))
+      state.servers.find((e) => objectEqual(unref(e).filter, filters))
   },
   actions: {
     fetchPlayers (filter: Filters) {
       filter = removeNullEntries(filter)
-      let entry = this.players.find((e) => objectEqual(e.value.filter, filter))
+      let entry = this.players.find((e) => objectEqual(unref(e).filter, filter))
       if (entry === undefined) {
-        entry = ref({ filter, data: {} })
+        entry = shallowRef({ filter, data: {} })
         this.players.push(entry)
       }
       fetch(
@@ -96,15 +96,17 @@ export const useKillStore = defineStore('kill', {
           new URLSearchParams(filter as Record<keyof Filters, string>)
       ).then(async response => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        entry!.value.data = await response.json()
+        unref(entry)!.data = Object.fromEntries(Object.entries(await response.json()).map(e => [e[0], ref(e[1] as Player)]))
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        triggerRef(entry!)
       })
       return entry
     },
     fetchWeapons (filter: Filters) {
       filter = removeNullEntries(filter)
-      let entry = this.weapons.find((e) => objectEqual(e.value.filter, filter))
+      let entry = this.weapons.find((e) => objectEqual(unref(e).filter, filter))
       if (!entry) {
-        entry = ref({ filter, data: {} })
+        entry = shallowRef({ filter, data: {} })
         this.weapons.push(entry)
       }
 
@@ -113,15 +115,17 @@ export const useKillStore = defineStore('kill', {
           new URLSearchParams(filter as Record<keyof Filters, string>)
       ).then(async response => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        entry!.value.data = await response.json()
+        unref(entry)!.data = Object.fromEntries(Object.entries(await response.json()).map(e => [e[0], ref(e[1] as Weapon)]))
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        triggerRef(entry!)
       })
       return entry
     },
     fetchServers (filter: Filters) {
       filter = removeNullEntries(filter)
-      let entry = this.servers.find((e) => objectEqual(e.value.filter, filter))
+      let entry = this.servers.find((e) => objectEqual(unref(e).filter, filter))
       if (!entry) {
-        entry = ref({ filter, data: {} })
+        entry = shallowRef({ filter, data: {} })
         this.servers.push(entry)
       }
       fetch(
@@ -129,7 +133,9 @@ export const useKillStore = defineStore('kill', {
           new URLSearchParams(filter as Record<keyof Filters, string>)
       ).then(async response => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        entry!.value.data = await response.json()
+        unref(entry)!.data = Object.fromEntries(Object.entries(await response.json()).map(e => [e[0], ref(e[1] as Server)]))
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        triggerRef(entry!)
       })
       return entry
     }

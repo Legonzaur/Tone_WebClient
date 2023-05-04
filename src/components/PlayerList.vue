@@ -16,18 +16,18 @@
       v-for="(player, index) in playerList" v-bind:key="player.id" v-on:click="$emit('highlightPlayer', player.id)"
       :ref="`player:` + player.id">
       <div><span>{{ index+1 }}</span></div>
-      <div><span>{{ player.username }}</span></div>
-      <div><span>{{ player.kills }}</span></div>
-      <div><span>{{ player.deaths }}</span></div>
-      <div><span>{{ Math.round(player.kills / Math.max(1, player.deaths) * 100) / 100 }}</span></div>
-      <div><span>{{ player.max_distance }}</span></div>
-      <div><span>{{ Math.round(((player.total_distance / player.kills) || 0) * 100) / 100 }}</span></div>
+      <div><span>{{ player.value.username }}</span></div>
+      <div><span>{{ player.value.kills }}</span></div>
+      <div><span>{{ player.value.deaths }}</span></div>
+      <div><span>{{ Math.round(player.value.kills / Math.max(1, player.value.deaths) * 100) / 100 }}</span></div>
+      <div><span>{{ player.value.max_distance }}</span></div>
+      <div><span>{{ Math.round(((player.value.total_distance / player.value.kills) || 0) * 100) / 100 }}</span></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType, Ref, toRaw, unref } from 'vue'
 import { useKillStore, Player, Filters } from '@/stores/kill'
 
 export default defineComponent({
@@ -43,33 +43,38 @@ export default defineComponent({
     }
   },
   computed: {
-    players (): { [key: string]: Player } {
+    players (): { [key: string]: Ref<Player> } {
       const { player: _, ...withoutPlayer } = this.filters
       const data = this.store.getPlayerList(withoutPlayer)?.value.data
       if (!data) return this.store.fetchPlayers(withoutPlayer).value.data
       return data
     },
-    playerList ():(Player & {id:string})[] {
+    playerList ():(Ref<Player> & {id:string})[] {
       if (!this.players) return []
-      let players = Object.entries(this.players).map(e => ({ id: e[0], ...e[1] }))
+      let players = Object.entries(this.players).map(e => {
+        const target = {} as ProxyHandler<Ref<Player>>
+        const player = new Proxy(e[1], target) as Ref<Player> & {id:string}
+        player.id = e[0]
+        return player
+      }) as (Ref<Player> & {id:string})[]
 
       if (this.sortingData.argument === 'username') {
         const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
-        players.sort((a: Player, b: Player) => {
-          return collator.compare(a.username, b.username)
+        players.sort((a: Ref<Player>, b: Ref<Player>) => {
+          return collator.compare(toRaw(a.value).username, toRaw(b.value).username)
         })
       } else if (this.sortingData.argument === 'k/d') {
-        players.sort((a: Player, b: Player) => {
-          return a.kills / Math.max(1, a.deaths) - b.kills / Math.max(1, b.deaths)
+        players.sort((a: Ref<Player>, b: Ref<Player>) => {
+          return toRaw(a.value).kills / Math.max(1, toRaw(a.value).deaths) - toRaw(b.value).kills / Math.max(1, toRaw(b.value).deaths)
         })
       } else if (this.sortingData.argument === 'avg_distance') {
-        players.sort((a: Player, b: Player) => {
-          return ((a.total_distance / a.kills) || 0) - ((b.total_distance / b.kills) || 0)
+        players.sort((a: Ref<Player>, b: Ref<Player>) => {
+          return ((toRaw(a.value).total_distance / toRaw(a.value).kills) || 0) - ((toRaw(b.value).total_distance / toRaw(b.value).kills) || 0)
         })
       } else {
         const argument = this.sortingData.argument
-        players.sort((a: Player, b: Player) => {
-          return a[argument] - b[argument]
+        players.sort((a: Ref<Player>, b: Ref<Player>) => {
+          return toRaw(a.value)[argument] - toRaw(b.value)[argument]
         })
       }
 
@@ -83,18 +88,16 @@ export default defineComponent({
   },
   watch: {
     playerHighlighted (newval) {
-      console.log('newVal')
-      const newElement = this.$refs['player:' + newval] as HTMLElement[]
-      // Some hack because of some inconsistency
-      setTimeout(function () {
-        if (newElement && newElement[0]) { newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) }
-      }, 0)
+      this.scrollToPlayer(newval)
+    },
+    playerList () {
+      if (this.playerHighlighted) this.scrollToPlayer(this.playerHighlighted)
     }
   },
   updated () {
-    const element = this.$refs['player:' + this.$props.playerHighlighted] as HTMLElement[]
+    /* const element = this.$refs['player:' + this.$props.playerHighlighted] as HTMLElement[]
     if (!element || !element[0]) return
-    element[0].scrollIntoView({ behavior: 'smooth', block: 'center' })
+    element[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) */
   },
   methods: {
     selectNextPlayer (e: KeyboardEvent) {
@@ -124,6 +127,13 @@ export default defineComponent({
         this.sortingData.direction = -1
       }
       this.sortingData.argument = argument as typeof this.sortingData.argument
+    },
+    scrollToPlayer (playerid:string) {
+      const newElement = this.$refs['player:' + playerid] as HTMLElement[]
+      // Some hack because of some inconsistency
+      setTimeout(function () {
+        if (newElement && newElement[0]) { newElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+      }, 10)
     }
   }
 

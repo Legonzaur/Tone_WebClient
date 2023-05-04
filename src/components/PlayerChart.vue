@@ -22,7 +22,7 @@ import dataLabel from 'chartjs-plugin-datalabels'
 import { useKillStore, Player, Filters } from '@/stores/kill'
 
 import { Scatter } from 'vue-chartjs'
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType, toRaw, unref } from 'vue'
 import { ChartEvent } from 'chart.js/dist/core/core.plugins'
 import { _DeepPartialObject } from 'chart.js/dist/types/utils'
 
@@ -51,8 +51,8 @@ export default defineComponent({
   computed: {
     playerList (): (Player & {id:string})[] {
       const data = this.store.getPlayerList(this.filters || {})?.value.data
-      if (!data) return Object.entries(this.store.fetchPlayers(this.filters || {}).value.data).map(e => ({ id: e[0], ...e[1] }))
-      const cut = Object.entries(data).map(e => ({ id: e[0], ...e[1] }))
+      if (!data) return Object.entries(this.store.fetchPlayers(this.filters || {}).value.data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))
+      const cut = Object.entries(data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))
       cut.sort((a, b) => {
         return b.kills - a.kills
       })

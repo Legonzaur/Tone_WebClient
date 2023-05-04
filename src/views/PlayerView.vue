@@ -86,7 +86,7 @@ import { Player, Weapon, Server, useKillStore, Filters } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
-import { defineComponent } from 'vue'
+import { Ref, defineComponent, toRaw, unref } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import weapons from '../stores/weapons.json'
@@ -122,11 +122,11 @@ export default defineComponent({
     }
   },
   computed: {
-    servers (): { [key: string]: Server } {
+    servers (): { [key: string]: Ref<Server> } {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { server: _, player: _1, ...withoutServer } = this.filters
       const data = this.store.getServerList(withoutServer)?.value.data
-      if (!data) return this.store.fetchServers(withoutServer).value.data
+      if (!data) return unref(this.store.fetchServers(withoutServer)).data
       return data
     },
     groupedServers () {
@@ -135,21 +135,22 @@ export default defineComponent({
         servers: (Server & { name?: string })[];
       }[]
       Object.entries(this.servers).forEach((e) => {
-        if (!hosts.find((host) => host.id === e[1].host + 'sfdsdfsd')) { hosts.push({ id: e[1].host + 'sfdsdfsd', servers: [] as Server[] }) }
+        const server = unref(e[1])
+        if (!hosts.find((host) => host.id === server.host + 'sfdsdfsd')) { hosts.push({ id: server.host + 'sfdsdfsd', servers: [] as Server[] }) }
         hosts
-          .find((host) => host.id === e[1].host + 'sfdsdfsd')
-          ?.servers.push({ name: e[0], ...e[1] })
+          .find((host) => host.id === server.host + 'sfdsdfsd')
+          ?.servers.push({ name: e[0], ...server })
       })
       return hosts
     },
-    weapons (): { [key: string]: Weapon } {
+    weapons (): { [key: string]: Ref<Weapon> } {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { weapon: _, player: _1, ...withoutWeapons } = this.filters
       const data = this.store.getWeaponList(withoutWeapons)?.value.data
       if (!data) return this.store.fetchWeapons(withoutWeapons).value.data
       return data
     },
-    players (): { [key: string]: Player } {
+    players (): { [key: string]: Ref<Player> } {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayers } = this.filters
       const data = this.store.getPlayerList(withoutPlayers)?.value.data
@@ -170,7 +171,7 @@ export default defineComponent({
       if (!this.players) return []
       const players = Object.entries(this.players).map((e) => ({
         id: e[0],
-        ...e[1]
+        ...toRaw(e[1].value)
       }))
       return players.sort((a: Player, b: Player) => {
         if (a.username < b.username) {
@@ -231,7 +232,7 @@ export default defineComponent({
     highlight_player (playerid: string) {
       const player = this.players[playerid]
       if (player) {
-        this.playerHighlighted = { id: playerid, ...player }
+        this.playerHighlighted = { id: playerid, ...unref(player) }
         return
       }
       this.playerHighlighted = undefined
