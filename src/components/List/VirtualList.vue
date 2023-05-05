@@ -81,11 +81,11 @@ export default defineComponent({
 }
 
 .playerRow:nth-child(2n) {
-  background: var(--current-line);
+  background: var(--bg-color);
 }
 
 .playerRow:hover {
-  background: var(--bg-color);
+  background: var(--current-line);
 }
 
 .playerRow>div:not(:last-child){
