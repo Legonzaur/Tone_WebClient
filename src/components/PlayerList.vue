@@ -12,7 +12,17 @@
       <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <VirtualList :list="playerList" :row-height="32" @highlightPlayer="$emit('highlightPlayer', $event)" :highlighted="playerHighlighted"></VirtualList>
+    <VirtualList :list="playerList" :row-height="32" @highlightPlayer="$emit('highlightPlayer', $event)" :highlighted="playerHighlighted" v-slot="slotProps">
+      <div :class="'playerRow ' + (slotProps.data.id === $props.playerHighlighted ? 'selected' : '')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
+        <div><span>{{ slotProps.index+1 }}</span></div>
+        <div><span>{{ slotProps.data.value.username }}</span></div>
+        <div><span>{{ slotProps.data.value.kills }}</span></div>
+        <div><span>{{ slotProps.data.value.deaths }}</span></div>
+        <div><span>{{ Math.round(slotProps.data.value.kills / Math.max(1, slotProps.data.value.deaths) * 100) / 100 }}</span></div>
+        <div><span>{{ slotProps.data.value.max_distance }}</span></div>
+        <div><span>{{ Math.round(((slotProps.data.value.total_distance / slotProps.data.value.kills) || 0) * 100) / 100 }}</span></div>
+      </div>
+    </VirtualList>
     <!-- <div :class="'playerRow ' + (player.id === $props.playerHighlighted ? 'selected' : '')"
        v-on:click="$emit('highlightPlayer', player.id)"
       :ref="`player:` + player.id">
@@ -178,6 +188,27 @@ export default defineComponent({
   /* border: 2px solid transparent; */
   transition: border .25s;
   height: 2em;
+}
+
+.playerRow:nth-child(2n+1) {
+  background: var(--accent);
+}
+
+.playerRow:nth-child(2n) {
+  background: var(--bg-color);
+}
+
+.playerRow:hover {
+  background: var(--current-line);
+}
+
+.playerRow>div:not(:last-child){
+  border-right: solid var(--bg-color) 2px;
+}
+
+.playerRow>div {
+  padding: .5em .8em 0 .25em;
+  overflow: hidden;
 }
 
 .playerHeaders {
