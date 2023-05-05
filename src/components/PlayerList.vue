@@ -12,7 +12,7 @@
       <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <VirtualList :list="playerList" :row-height="32" @highlightPlayer="$emit('highlightPlayer', $event)" :highlighted="playerHighlighted" v-slot="slotProps">
+    <VirtualList :list="playerList" :row-height="32" v-slot="slotProps">
       <div :class="'playerRow ' + (slotProps.data.id === $props.playerHighlighted ? 'selected' : '')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
         <div><span>{{ slotProps.index+1 }}</span></div>
         <div><span>{{ slotProps.data.value.username }}</span></div>
