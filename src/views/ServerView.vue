@@ -4,7 +4,7 @@
     <div>
         <div v-for="(server, servername) in servers" v-bind:key="servername" :class="(!nsServersByName[servername] ? 'offline ' : ' ') + (!nsServersByName[servername]?.playerCount ? 'inactive' : '')">
             {{ servername }} {{ server.value.kills }} {{ nsServersByName[servername] ? nsServersByName[servername]?.playerCount +'/'+nsServersByName[servername]?.maxPlayers : ''}}
-            <img v-if="nsServersByName[servername]" :src="`/maps/${nsServersByName[servername].map}_lobby.png`"/>
+            <img v-if="nsServersByName[servername]" :src="`${publicPath}maps/${nsServersByName[servername].map}_lobby.png`"/>
         </div>
     </div>
 </template>
@@ -21,7 +21,8 @@ export default defineComponent({
   },
   data () {
     return {
-      store: useKillStore()
+      store: useKillStore(),
+      publicPath: process.env.BASE_URL
     }
   },
   computed: {
