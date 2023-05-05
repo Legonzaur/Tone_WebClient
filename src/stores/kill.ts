@@ -77,6 +77,7 @@ export interface State {
   nsServers: NSServer[] | undefined
 }
 
+let serverInterval:number
 export const useKillStore = defineStore('kill', {
   state: (): State => ({
     servers: [],
@@ -158,6 +159,8 @@ export const useKillStore = defineStore('kill', {
         'https://northstar.tf/client/servers').then(async response => {
         this.nsServers = await response.json()
       })
+      clearInterval(serverInterval)
+      serverInterval = setInterval(() => this.fetchNSServers(), 60000)
       return this.nsServers || []
     }
   }
