@@ -15,7 +15,7 @@ import weapons from '../stores/weapons.json'
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 
 export default defineComponent({
-  name: 'PlayerChart',
+  name: 'WeaponChart',
   props: {
     filters: Object as PropType<Filters>,
     playerHighlighted: String
@@ -146,8 +146,9 @@ export default defineComponent({
     },
     sortedWeaponList (): string[] {
       if (!this.weapons) return []
+      const date = new Date()
       const weapons = Object.keys(this.weapons)
-      weapons.sort((a, b) => {
+      weapons.filter(e => this.weapons[e].value.kills > 0).sort((a, b) => {
         if (Number(this.weapons[a].value.kills) < Number(this.weapons[b].value.kills)) {
           return -1
         }
@@ -156,6 +157,7 @@ export default defineComponent({
         }
         return 0
       })
+      console.log('sorting the weapon list took ' + (new Date().getTime() - date.getTime()) + 'ms')
       return weapons
     }
   }
