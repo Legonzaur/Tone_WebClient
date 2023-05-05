@@ -130,7 +130,6 @@ function registerWebSocketKill (data : websocketData) {
     if (data.attacker_id !== data.victim_id) {
       unref(e.value.data[data.cause_of_death]).kills++
       unref(e.value.data[data.cause_of_death]).total_distance += data.distance
-    unref(e.value.data[data.cause_of_death]).kills++
       unref(e.value.data[data.cause_of_death]).max_distance = Math.max(data.distance, unref(e.value.data[data.cause_of_death]).max_distance)
     }
     unref(e.value.data[data.cause_of_death]).deaths++
@@ -142,6 +141,22 @@ function registerWebSocketKill (data : websocketData) {
     // Handle other types of filters once those are implemented
     )
   }).forEach((e) => {
-    e.value.data[data.servername].value.kills++
+    if (!e.value.data[data.servername]) {
+      e.value.data[data.servername] = ref({
+        deaths: 0,
+        kills: 500,
+        max_distance: 0,
+        total_distance: 0,
+        deaths_while_equipped: 0,
+        host: data.host
+      })
+    }
+
+    if (data.attacker_id !== data.victim_id) {
+      unref(e.value.data[data.servername]).kills++
+      unref(e.value.data[data.servername]).total_distance += data.distance
+      unref(e.value.data[data.servername]).max_distance = Math.max(data.distance, unref(e.value.data[data.servername]).max_distance)
+    }
+    unref(e.value.data[data.servername]).deaths++
   })
 }
