@@ -6,15 +6,8 @@
         deselectLabel="remove"
         placeholder="Select server"
         v-model="model.server"
-        :options="groupedServers"
-        group-values="servers"
-        group_label="id"
-        :group-select="false"
+        :options="sortedServerList"
         :allow-empty="true"
-        :multiple="false"
-        :custom-label="((e: any) => e.name)"
-        track-by="name"
-        label="name"
       >
       </VueMultiselect>
       <button @click="model.server = undefined" :disabled="!model.server">X</button>
@@ -121,16 +114,17 @@ export default defineComponent({
     },
     groupedServers () {
       const hosts = [] as {
-        id: string;
+        id: number;
         servers: (Server & { name?: string })[];
       }[]
       Object.entries(this.servers).forEach((e) => {
         const server = unref(e[1])
-        if (!hosts.find((host) => host.id === server.host + 'sfdsdfsd')) { hosts.push({ id: server.host + 'sfdsdfsd', servers: [] as Server[] }) }
+        if (!hosts.find((host) => host.id === server.host)) { hosts.push({ id: server.host, servers: [] as Server[] }) }
         hosts
-          .find((host) => host.id === server.host + 'sfdsdfsd')
+          .find((host) => host.id === server.host)
           ?.servers.push({ name: e[0], ...server })
       })
+      console.log(hosts)
       return hosts
     },
     weapons (): { [key: string]: Ref<Weapon> } {
