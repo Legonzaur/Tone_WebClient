@@ -102,6 +102,8 @@ function registerWebSocketKill (data : websocketData) {
   })
   store.$state.weapons.filter((e) => {
     return (
+      (!e.value.filter.server ||
+        e.value.filter.server === data.servername) &&
       (!e.value.filter.player || e.value.filter.player === data.attacker_id)
     // Handle other types of filters once those are implemented
     )
