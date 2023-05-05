@@ -88,7 +88,7 @@ export default defineComponent({
     return {
       model: { server: undefined, weapon: undefined } as unknown as {
         weapon: string | undefined;
-        server: { name?: string } | (Server & { name?: string })[] | undefined;
+        server: string | undefined;
       },
       filters: {} as Filters,
       store: useKillStore(),
@@ -98,7 +98,8 @@ export default defineComponent({
   },
   created () {
     let server
-    if (this.$route.query.server) server = { name: this.$route.query.server?.toString() }
+    this.applyRouteFilters()
+    if (this.$route.query.server) server = this.$route.query.server?.toString()
     this.model = {
       server,
       weapon: this.$route.query.weapon?.toString()
@@ -177,7 +178,7 @@ export default defineComponent({
     },
     model: {
       handler (newModel) {
-        this.filters.server = newModel.server?.name
+        this.filters.server = newModel.server
         this.filters.weapon = newModel.weapon
       },
       deep: true
@@ -196,20 +197,8 @@ export default defineComponent({
       const { player: _, ...withoutPlayer } = this.$route.query
       router.push({ query: { player: newValue?.id, ...withoutPlayer } })// .then(e => { console.log(e) })
     },
-    '$route' (to) {
-      if (this.playerHighlighted?.id !== to.query.player) {
-        const playerId = to.query.player?.toString()
-        if (playerId) {
-          this.highlight_player(playerId)
-        }
-      }
-      if (this.filters.weapon !== to.query.weapon) {
-        this.model.weapon = to.query.weapon
-      }
-      if (this.filters.server !== to.query.server) {
-        if (to.query.server) this.model.server = { name: to.query.server }
-        else this.model.server = undefined
-      }
+    '$route' () {
+      this.applyRouteFilters()
     }
   },
   methods: {
@@ -220,6 +209,21 @@ export default defineComponent({
         return
       }
       this.playerHighlighted = undefined
+    },
+    applyRouteFilters () {
+      if (this.playerHighlighted?.id !== this.$route.query.player) {
+        const playerId = this.$route.query.player?.toString()
+        if (playerId) {
+          this.highlight_player(playerId)
+        }
+      }
+      if (this.filters.weapon !== this.$route.query.weapon) {
+        this.model.weapon = this.$route.query.weapon?.toString()
+      }
+      if (this.filters.server !== this.$route.query.server) {
+        if (this.$route.query.server) this.model.server = this.$route.query.server?.toString()
+        else this.model.server = undefined
+      }
     }
   }
 })
