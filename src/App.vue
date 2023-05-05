@@ -2,10 +2,11 @@
   <header>
     <nav>
       <!-- <div class="navbar-element">hamburger</div> -->
-      <div class="navbar-element"><!--<span>logo&nbsp;</span>--->TONE&nbsp;API</div>
-      <div class="navbar-element github-link"><a href="https://github.com/Legonzaur/Tone_WebClient">Github</a></div>
+
+      <div class="navbar-logo"><a href="https://github.com/Legonzaur/Tone_WebClient" target="_blank"><img src="/tone_icon.png"/></a></div>
+      <div class="navbar-element github-link"><a href="https://github.com/Legonzaur/Tone_WebClient" target="_blank">Github</a></div>
       <div class="navbar-element github-link"><a
-          href="https://github.com/Legonzaur/ToneAPI_servermod">Northstar&nbsp;Server&nbsp;Mod</a></div>
+          href="https://github.com/Legonzaur/ToneAPI_servermod" target="_blank">Northstar&nbsp;Server&nbsp;Mod</a></div>
       <div class="spacer"></div>
       <!-- <router-link to="/" class="navbar-element">Home</router-link>
       <router-link to="/about" class="navbar-element">About</router-link> -->
@@ -103,13 +104,17 @@ nav a.router-link-exact-active {
   color: var(--orange);
 }
 
+.navbar-logo img{
+  height:48px;
+  padding:8px 24px;
+}
 .navbar-element {
   text-align: center;
   line-height: 16px;
   padding: 24px 32px;
 }
 
-.navbar-element:hover {
+.navbar-element:hover, .navbar-logo:hover {
   background: var(--current-line)
 }
 
