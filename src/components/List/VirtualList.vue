@@ -23,7 +23,7 @@ export default defineComponent({
   data () {
     return {
       toLoad: 10,
-      vlistHeight: 0,
+      vlistHeight: 10,
       vIndex: 0
     }
   },
@@ -33,7 +33,14 @@ export default defineComponent({
     highlighted: String
   },
   emits: ['highlightPlayer'],
-
+  mounted () {
+    if (this.$props.list) {
+      this.vlistHeight = (this.$refs.vlist as HTMLElement)?.getBoundingClientRect().height || 0
+      if (this.$props.highlighted) {
+        setTimeout(() => (this.$refs.vlist as HTMLElement)?.scrollBy({ top: ((this.list.findIndex(e => e.id === this.$props.highlighted)) * this.rowHeight) - ((this.$refs.vlist as HTMLElement))?.scrollTop - (this.vlistHeight / 2 - this.$props.rowHeight), behavior: 'smooth' }), 1)
+      }
+    }
+  },
   computed: {
     visibleList () {
       return this.list.slice(Math.max(this.vIndex, 0), Math.min(this.vIndex + this.visibleCount * 3, this.list.length))

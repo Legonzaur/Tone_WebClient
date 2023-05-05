@@ -55,6 +55,17 @@ export interface Server extends Kill {
   host: number;
 }
 
+export interface NSServer {
+  name:string;
+  region:string;
+  description:string;
+  playerCount:number;
+  maxPlayers:number;
+  map:string;
+  playlist:string;
+  hasPassword:boolean;
+  modInfo:{Mods:[]}
+}
 // define your typings for the store state
 export interface State {
   servers: Ref<KillData<Server>>[];
@@ -63,6 +74,7 @@ export interface State {
   maps: Ref<KillData<Kill>>[];
   gamemodes: Ref<KillData<Kill>>[];
   hosts: { [key: number]: string };
+  nsServers: NSServer[] | undefined
 }
 
 export const useKillStore = defineStore('kill', {
@@ -72,7 +84,8 @@ export const useKillStore = defineStore('kill', {
     weapons: [],
     maps: [],
     gamemodes: [],
-    hosts: {}
+    hosts: {},
+    nsServers: undefined
   }),
   getters: {
     getPlayerList: (state) => (filters: Filters) => {
@@ -81,7 +94,8 @@ export const useKillStore = defineStore('kill', {
     getWeaponList: (state) => (filters: Filters) =>
       state.weapons.find((e) => objectEqual(unref(e).filter, filters)),
     getServerList: (state) => (filters: Filters) =>
-      state.servers.find((e) => objectEqual(unref(e).filter, filters))
+      state.servers.find((e) => objectEqual(unref(e).filter, filters)),
+    getNSServers: (state) => state.nsServers
   },
   actions: {
     fetchPlayers (filter: Filters) {
@@ -138,6 +152,13 @@ export const useKillStore = defineStore('kill', {
         triggerRef(entry!)
       })
       return entry
+    },
+    fetchNSServers () {
+      fetch(
+        'https://northstar.tf/client/servers').then(async response => {
+        this.nsServers = await response.json()
+      })
+      return this.nsServers || []
     }
   }
 })

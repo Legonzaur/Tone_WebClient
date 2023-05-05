@@ -94,7 +94,6 @@ export default defineComponent({
           return aVal[argument] - bVal[argument]
         })
       }
-      console.log('Sorting the player object took + ' + ((new Date()).getTime() - date.getTime()) + 'ms')
       if (this.sortingData.direction < 0) {
         players.reverse()
       }

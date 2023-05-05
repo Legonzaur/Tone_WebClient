@@ -9,6 +9,7 @@
       <div class="spacer"></div>
       <!-- <router-link to="/" class="navbar-element">Home</router-link>
       <router-link to="/about" class="navbar-element">About</router-link> -->
+      <router-link to="/servers" class="navbar-element">Servers</router-link>
       <router-link to="/" class="navbar-element">Players</router-link>
     </nav>
   </header>

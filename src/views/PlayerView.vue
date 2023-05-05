@@ -96,9 +96,8 @@ export default defineComponent({
       weaponLocale: weapons as { [key: string]: string }
     }
   },
-  created () {
+  beforeCreate () {
     let server
-    this.applyRouteFilters()
     if (this.$route.query.server) server = this.$route.query.server?.toString()
     this.model = {
       server,
@@ -197,8 +196,11 @@ export default defineComponent({
       const { player: _, ...withoutPlayer } = this.$route.query
       router.push({ query: { player: newValue?.id, ...withoutPlayer } })// .then(e => { console.log(e) })
     },
-    '$route' () {
-      this.applyRouteFilters()
+    $route: {
+      handler: function () {
+        this.applyRouteFilters()
+      },
+      immediate: true
     }
   },
   methods: {

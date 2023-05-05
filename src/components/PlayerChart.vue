@@ -62,7 +62,7 @@ export default defineComponent({
       // eslint-disable-next-line no-unused-expressions
       this.refreshColors
       const colors = {} as { [key: string]: string }
-      if (this.$refs.container) {
+      if (this.$refs?.container) {
         const style = getComputedStyle(this.$refs.container as Element)
         colors.fg = style.getPropertyValue('--foreground')
         colors.bg = style.getPropertyValue('--bg-color')
