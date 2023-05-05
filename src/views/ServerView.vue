@@ -2,8 +2,9 @@
     <div id="filters">
     </div>
     <div>
-        <div v-for="(server, servername) in servers" v-bind:key="servername" :class="(!nsServersByName[servername] ? 'offline ' : ' ') + (nsServersByName[servername]?.playerCount ? 'active' : '')">
-            {{ servername }} {{ server.value.kills }} {{ nsServersByName[servername]?.playerCount +'/'+nsServersByName[servername]?.maxPlayers }}
+        <div v-for="(server, servername) in servers" v-bind:key="servername" :class="(!nsServersByName[servername] ? 'offline ' : ' ') + (!nsServersByName[servername]?.playerCount ? 'inactive' : '')">
+            {{ servername }} {{ server.value.kills }} {{ nsServersByName[servername] ? nsServersByName[servername]?.playerCount +'/'+nsServersByName[servername]?.maxPlayers : ''}}
+            <img v-if="nsServersByName[servername]" :src="`/maps/${nsServersByName[servername].map}_lobby.png`"/>
         </div>
     </div>
 </template>
@@ -18,7 +19,6 @@ export default defineComponent({
   components: {
 
   },
-
   data () {
     return {
       store: useKillStore()
@@ -30,9 +30,14 @@ export default defineComponent({
       if (!data) return unref(this.store.fetchServers({})).data
       return data
     },
+    serverList ():(Ref<Server> & {name:string})[] {
+      return Object.entries(this.servers).map(e => ({ ...e[1], name: e[0] }))
+    },
     nsServers ():NSServer[] {
       const data = this.store.getNSServers
-      if (!data) return this.store.fetchNSServers()
+      if (!data) {
+        return this.store.fetchNSServers()
+      }
       console.log(data)
       return data
     },
@@ -45,10 +50,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.inactive{
+    color:var(--comment);
+}
 .offline{
-    background:darkgray
+    color: var(--current-line);
 }
-.active{
-    background:greenyellow
-}
+
 </style>
