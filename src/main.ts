@@ -52,7 +52,7 @@ socket.onmessage = function (e) {
 }
 
 function registerWebSocketKill (data : websocketData) {
-  const allPlayerArrays = store.$state.players.filter((e) => {
+  store.$state.players.filter((e) => {
     return (
       (!e.value.filter.server ||
                 e.value.filter.server === data.servername) &&
@@ -60,8 +60,7 @@ function registerWebSocketKill (data : websocketData) {
                 e.value.filter.weapon === data.cause_of_death)
     // Handle other types of filters once those are implemented
     )
-  })
-  allPlayerArrays.forEach(e => {
+  }).forEach(e => {
     if (!e.value.data[data.attacker_id]) {
       e.value.data[data.attacker_id] = ref({
         deaths: 0,
@@ -95,18 +94,18 @@ function registerWebSocketKill (data : websocketData) {
     unref(e.value.data[data.victim_id]).deaths++
     unref(e.value.data[data.victim_id]).username = data.victim_name
     unref(e.value.data[data.attacker_id]).username = data.attacker_name
-    unref(e.value.data[data.attacker_id]).kills++
-    unref(e.value.data[data.attacker_id]).total_distance += data.distance
-    unref(e.value.data[data.attacker_id]).max_distance = Math.max(data.distance, unref(e.value.data[data.attacker_id]).max_distance)
+    if (data.attacker_id !== data.victim_id) {
+      unref(e.value.data[data.attacker_id]).kills++
+      unref(e.value.data[data.attacker_id]).total_distance += data.distance
+      unref(e.value.data[data.attacker_id]).max_distance = Math.max(data.distance, unref(e.value.data[data.attacker_id]).max_distance)
+    }
   })
-  const allWeaponsArrays = store.$state.weapons.filter((e) => {
+  store.$state.weapons.filter((e) => {
     return (
       (!e.value.filter.player || e.value.filter.player === data.attacker_id)
     // Handle other types of filters once those are implemented
     )
-  })
-
-  allWeaponsArrays.forEach(e => {
+  }).forEach(e => {
     if (!e.value.data[data.cause_of_death]) {
       e.value.data[data.cause_of_death] = ref({
         deaths: 0,
@@ -128,9 +127,21 @@ function registerWebSocketKill (data : websocketData) {
           }
     } */
 
-    // unref(e.value.data[data.cause_of_death]).deaths++
-    unref(e.value.data[data.cause_of_death]).total_distance += data.distance
+    if (data.attacker_id !== data.victim_id) {
+      unref(e.value.data[data.cause_of_death]).kills++
+      unref(e.value.data[data.cause_of_death]).total_distance += data.distance
     unref(e.value.data[data.cause_of_death]).kills++
-    unref(e.value.data[data.cause_of_death]).max_distance = Math.max(data.distance, unref(e.value.data[data.cause_of_death]).max_distance)
+      unref(e.value.data[data.cause_of_death]).max_distance = Math.max(data.distance, unref(e.value.data[data.cause_of_death]).max_distance)
+    }
+    unref(e.value.data[data.cause_of_death]).deaths++
+  })
+  store.$state.servers.filter((e) => {
+    return (
+      (!e.value.filter.server ||
+                e.value.filter.server === data.servername)
+    // Handle other types of filters once those are implemented
+    )
+  }).forEach((e) => {
+    e.value.data[data.servername].value.kills++
   })
 }
