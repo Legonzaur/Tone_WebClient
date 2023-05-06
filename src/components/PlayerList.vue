@@ -12,8 +12,8 @@
       <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
-    <VirtualList :list="playerList" :row-height="32" v-slot="slotProps">
-      <div :class="'playerRow ' + (slotProps.data.id === $props.playerHighlighted ? 'selected ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
+    <VirtualList :list="playerList" :row-height="32" v-slot="slotProps" :highlighted="playerHighlighted">
+      <div :class="'playerRow ' + (slotProps.data.id === playerHighlighted ? 'selected ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
         <div><span>{{ slotProps.index+1 }}</span></div>
         <div><span>{{ slotProps.data.value.username }}</span></div>
         <div><span>{{ slotProps.data.value.kills }}</span></div>
@@ -106,11 +106,6 @@ export default defineComponent({
     playerList () {
       if (this.playerHighlighted) this.scrollToPlayer(this.playerHighlighted)
     }
-  },
-  updated () {
-    /* const element = this.$refs['player:' + this.$props.playerHighlighted] as HTMLElement[]
-    if (!element || !element[0]) return
-    element[0].scrollIntoView({ behavior: 'smooth', block: 'center' }) */
   },
   methods: {
     selectNextPlayer (e: KeyboardEvent) {
