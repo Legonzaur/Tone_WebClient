@@ -3,7 +3,7 @@
     <nav>
       <!-- <div class="navbar-element">hamburger</div> -->
 
-      <div class="navbar-logo"><a href="https://github.com/Legonzaur/Tone_WebClient" target="_blank"><img src="/tone_icon.png"/></a></div>
+      <div class="navbar-logo"><a href="https://github.com/Legonzaur/Tone_WebClient" target="_blank"><img :src="`${publicPath}tone_icon.png`"/></a></div>
       <div class="navbar-element github-link"><a href="https://github.com/Legonzaur/Tone_WebClient" target="_blank">Github</a></div>
       <div class="navbar-element github-link"><a
           href="https://github.com/Legonzaur/ToneAPI_servermod" target="_blank">Northstar&nbsp;Server&nbsp;Mod</a></div>
@@ -22,7 +22,11 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-
+  data () {
+    return {
+      publicPath: process.env.BASE_URL
+    }
+  }
 })
 </script>
 
