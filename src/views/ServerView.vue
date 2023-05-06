@@ -20,6 +20,7 @@
           <div><span>{{ slotProps.data.name + (!nsServersByName[slotProps.data.name] ? ' (offline)' : '') }}</span></div>
           <img v-if="nsServersByName[slotProps.data.name]"
             :src="`${publicPath}maps/${nsServersByName[slotProps.data.name].map}_lobby.png`" />
+            <div v-if="!nsServersByName[slotProps.data.name]"></div>
 
           <div><span>{{ slotProps.data._value.deaths }}</span></div>
           <div><span>{{ slotProps.data._value.max_distance }}</span></div>
