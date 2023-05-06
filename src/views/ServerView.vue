@@ -48,14 +48,19 @@ export default defineComponent({
       return data
     },
     serverList (): (Ref<Server> & { name: string })[] {
-      return Object.entries(this.servers).map(e => ({ ...e[1], name: e[0] }))
+      const data = Object.entries(this.servers).map(e => ({ ...e[1], name: e[0] }))
+      data.sort((server1, server2) => {
+        const a = !this.nsServersByName[server1.name] ? -1 : this.nsServersByName[server1.name].playerCount ? 1 : 0
+        const b = !this.nsServersByName[server2.name] ? -1 : this.nsServersByName[server2.name].playerCount ? 1 : 0
+        return b - a
+      })
+      return data
     },
     nsServers (): NSServer[] {
       const data = this.store.getNSServers
       if (!data) {
         return this.store.fetchNSServers()
       }
-      console.log(data)
       return data
     },
     nsServersByName (): { [key: string]: NSServer } {
