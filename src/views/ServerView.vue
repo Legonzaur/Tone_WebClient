@@ -5,7 +5,7 @@
 
   <VirtualList :list="serverList" :row-height="100" v-slot="slotProps">
     <div
-      :class="'serverRow ' + (!nsServersByName[slotProps.data.name] ? 'offline ' : ' ') + (!nsServersByName[slotProps.data.name]?.playerCount ? 'inactive' : '')">
+      :class="'serverRow ' + (!nsServersByName[slotProps.data.name] ? 'offline ' : '') + (!nsServersByName[slotProps.data.name]?.playerCount ? 'inactive ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')">
       <div><span>{{ slotProps.index + 1 }}</span></div>
       <div><span>{{ slotProps.data.name }}</span></div>
       <div><span>{{ slotProps.data._value.kills }}</span></div>
@@ -92,11 +92,11 @@ export default defineComponent({
   height: 100px;
 }
 
-.serverRow:nth-child(2n+1) {
+.serverRow.odd {
   background: var(--accent);
 }
 
-.serverRow:nth-child(2n) {
+.serverRow.uneven {
   background: var(--bg-color);
 }
 

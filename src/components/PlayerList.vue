@@ -13,7 +13,7 @@
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
     </div>
     <VirtualList :list="playerList" :row-height="32" v-slot="slotProps">
-      <div :class="'playerRow ' + (slotProps.data.id === $props.playerHighlighted ? 'selected' : '')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
+      <div :class="'playerRow ' + (slotProps.data.id === $props.playerHighlighted ? 'selected ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
         <div><span>{{ slotProps.index+1 }}</span></div>
         <div><span>{{ slotProps.data.value.username }}</span></div>
         <div><span>{{ slotProps.data.value.kills }}</span></div>
@@ -179,11 +179,11 @@ export default defineComponent({
   height: 2em;
 }
 
-.playerRow:nth-child(2n+1) {
+.playerRow.odd {
   background: var(--accent);
 }
 
-.playerRow:nth-child(2n) {
+.playerRow.uneven {
   background: var(--bg-color);
 }
 
