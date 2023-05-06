@@ -23,17 +23,6 @@
         <div><span>{{ Math.round(((slotProps.data.value.total_distance / slotProps.data.value.kills) || 0) * 100) / 100 }}</span></div>
       </div>
     </VirtualList>
-    <!-- <div :class="'playerRow ' + (player.id === $props.playerHighlighted ? 'selected' : '')"
-       v-on:click="$emit('highlightPlayer', player.id)"
-      :ref="`player:` + player.id">
-      <div><span>{{ index+1 }}</span></div>
-      <div><span>{{ player.value.username }}</span></div>
-      <div><span>{{ player.value.kills }}</span></div>
-      <div><span>{{ player.value.deaths }}</span></div>
-      <div><span>{{ Math.round(player.value.kills / Math.max(1, player.value.deaths) * 100) / 100 }}</span></div>
-      <div><span>{{ player.value.max_distance }}</span></div>
-      <div><span>{{ Math.round(((player.value.total_distance / player.value.kills) || 0) * 100) / 100 }}</span></div>
-    </div> -->
   </div>
 </template>
 

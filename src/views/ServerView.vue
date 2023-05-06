@@ -1,28 +1,26 @@
 <template>
-    <div id="filters">
+  <div id="filters">
 
+  </div>
+
+  <VirtualList :list="serverList" :row-height="100" v-slot="slotProps">
+    <div
+      :class="'serverRow ' + (!nsServersByName[slotProps.data.name] ? 'offline ' : ' ') + (!nsServersByName[slotProps.data.name]?.playerCount ? 'inactive' : '')">
+      <div><span>{{ slotProps.index + 1 }}</span></div>
+      <div><span>{{ slotProps.data.name }}</span></div>
+      <div><span>{{ slotProps.data._value.kills }}</span></div>
+      <div><span>{{ slotProps.data._value.max_distance }}</span></div>
+      <div><span>{{ Math.round(((slotProps.data._value.total_distance / slotProps.data._value.kills) || 0) * 100) /
+        100 }}</span></div>
+      <div><span>{{ nsServersByName[slotProps.data.name] ? nsServersByName[slotProps.data.name]?.playerCount
+        + '/' + nsServersByName[slotProps.data.name]?.maxPlayers : '' }}</span></div>
+      <img v-if="nsServersByName[slotProps.data.name]"
+        :src="`${publicPath}maps/${nsServersByName[slotProps.data.name].map}_lobby.png`" />
     </div>
+  </VirtualList>
+  <div>
 
-    <VirtualList :list="serverList" :row-height="100" v-slot="slotProps">
-        <div
-            :class="'serverRow ' + (!nsServersByName[slotProps.data.name] ? 'offline ' : ' ') + (!nsServersByName[slotProps.data.name]?.playerCount ? 'inactive' : '')">
-            <div><span>{{ slotProps.index + 1 }}</span></div>
-            <div><span>{{ slotProps.data.name }}</span></div>
-            <div><span>{{ slotProps.data._value.kills }}</span></div>
-            <div><span>{{ slotProps.data._value.max_distance }}</span></div>
-            <div><span>{{ Math.round(((slotProps.data._value.total_distance / slotProps.data._value.kills) || 0) * 100) /
-                100 }}</span></div>
-            <img v-if="nsServersByName[slotProps.data.name]"
-                :src="`${publicPath}maps/${nsServersByName[slotProps.data.name].map}_lobby.png`" />
-        </div>
-        <!-- <div :class="(!nsServersByName[slotProps.data.servername] ? 'offline ' : ' ') + (!nsServersByName[slotProps.data.servername]?.playerCount ? 'inactive' : '')">
-            {{ slotProps.data.servername }} {{ slotProps.data.value.kills }} {{ nsServersByName[slotProps.data.servername] ? nsServersByName[slotProps.data.servername]?.playerCount +'/'+nsServersByName[slotProps.data.servername]?.maxPlayers : ''}}
-            <img v-if="nsServersByName[slotProps.data.servername]" :src="`${publicPath}maps/${nsServersByName[slotProps.data.servername].map}_lobby.png`"/>
-        </div> -->
-    </VirtualList>
-    <div>
-
-    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -73,40 +71,45 @@ export default defineComponent({
 
 <style scoped>
 .inactive {
-    color: var(--comment);
+  color: var(--comment);
 }
 
 .offline {
-    color: var(--current-line);
+  color: var(--current-line);
 }
 
 .serverRow,
 .serverHeaders {
-    box-sizing: border-box;
-    display: grid;
-    grid-template-columns: 5ch 20ch 6ch 6ch 6ch 10ch 1fr;
-    background: var(--bg-color);
-    text-align: left;
-    cursor: pointer;
-    margin: 0;
-    /* border: 2px solid transparent; */
-    transition: border .25s;
-    height: 100px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 5ch 40ch 7ch 7ch 7ch 7ch 1fr;
+  background: var(--bg-color);
+  text-align: left;
+  cursor: pointer;
+  margin: 0;
+  /* border: 2px solid transparent; */
+  transition: border .25s;
+  height: 100px;
 }
 
 .serverRow:nth-child(2n+1) {
-    background: var(--accent);
+  background: var(--accent);
 }
 
 .serverRow:nth-child(2n) {
-    background: var(--bg-color);
+  background: var(--bg-color);
 }
 
 .serverRow:hover {
-    background: var(--current-line);
+  background: var(--current-line);
+}
+
+.serverRow>div:not(:last-child){
+  border-right: solid var(--bg-color) 2px;
 }
 
 img {
-    object-fit: contain;
-    height:100%
-}</style>
+  object-fit: contain;
+  height: 100%
+}
+</style>

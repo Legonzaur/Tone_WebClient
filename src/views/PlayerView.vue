@@ -124,7 +124,6 @@ export default defineComponent({
           .find((host) => host.id === server.host)
           ?.servers.push({ name: e[0], ...server })
       })
-      console.log(hosts)
       return hosts
     },
     weapons (): { [key: string]: Ref<Weapon> } {
