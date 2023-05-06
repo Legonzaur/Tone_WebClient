@@ -7,10 +7,10 @@
       <span v-on:click="updateSort('kills')" :class="sortingData.argument == 'kills' ? 'selected' : ''">K</span>
       <span v-on:click="updateSort('deaths')" :class="sortingData.argument == 'deaths' ? 'selected' : ''">D</span>
       <span v-on:click="updateSort('k/d')" :class="sortingData.argument == 'k/d' ? 'selected' : ''">K/D</span>
-      <span v-on:click="updateSort('max_distance')" :class="sortingData.argument == 'max_distance' ? 'selected' : ''">max
+      <span v-on:click="updateSort('max_distance')" :class="sortingData.argument == 'max_distance' ? 'selected' : ''">Max
         distance</span>
       <span v-on:click="updateSort('avg_distance')"
-        :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">average distance</span>
+        :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">Average distance</span>
     </div>
     <VirtualList :list="playerList" :row-height="32" v-slot="slotProps" :highlighted="playerHighlighted">
       <div :class="'playerRow ' + (slotProps.data.id === playerHighlighted ? 'selected ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
