@@ -64,7 +64,7 @@ function registerWebSocketKill (data : websocketData) {
     if (!e.value.data[data.attacker_id]) {
       e.value.data[data.attacker_id] = ref({
         deaths: 0,
-        kills: 500,
+        kills: 0,
         max_distance: 0,
         total_distance: 0,
         username: data.attacker_name
@@ -111,7 +111,7 @@ function registerWebSocketKill (data : websocketData) {
     if (!e.value.data[data.cause_of_death]) {
       e.value.data[data.cause_of_death] = ref({
         deaths: 0,
-        kills: 500,
+        kills: 0,
         max_distance: 0,
         total_distance: 0,
         deaths_while_equipped: 0
@@ -146,7 +146,7 @@ function registerWebSocketKill (data : websocketData) {
     if (!e.value.data[data.servername]) {
       e.value.data[data.servername] = ref({
         deaths: 0,
-        kills: 500,
+        kills: 0,
         max_distance: 0,
         total_distance: 0,
         deaths_while_equipped: 0,
