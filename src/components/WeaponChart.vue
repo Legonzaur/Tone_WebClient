@@ -39,7 +39,9 @@ export default defineComponent({
   computed: {
     progress () {
       const { weapon: _, ...withoutWeapon } = this.filters || {}
-      return this.store.getWeaponList(withoutWeapon)?.value.progress
+      const data = this.store.getWeaponList(withoutWeapon)?.value
+      if (!data) return this.store.fetchWeapons(withoutWeapon).value.progress
+      return data.progress
     },
     colors () {
       // eslint-disable-next-line no-unused-expressions
