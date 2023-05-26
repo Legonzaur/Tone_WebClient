@@ -58,7 +58,6 @@ function fetchWithLoading (url: string, progress: (percentage: number) => void) 
             reader.read().then(({ done, value }) => {
               if (done) {
                 controller.close()
-                console.log('ended')
                 progress(1)
                 return
               }
@@ -183,7 +182,6 @@ export const useKillStore = defineStore('kill', {
       filter = removeNullEntries(filter)
       let entry = this.weapons.find((e) => objectEqual(unref(e).filter, filter))
       if (!entry) {
-        console.log(filter)
         entry = shallowRef({ filter, data: {} })
         this.weapons.push(entry)
       }
