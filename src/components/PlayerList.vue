@@ -12,7 +12,8 @@
       <span v-on:click="updateSort('avg_distance')"
         :class="sortingData.argument == 'avg_distance' ? 'selected' : ''">Average distance</span>
     </div>
-    <VirtualList :list="playerList" :row-height="32" v-slot="slotProps" :highlighted="playerHighlighted">
+    <LoadingBar v-if="progress!==1" :value="progress"></LoadingBar>
+    <VirtualList :list="playerList" :row-height="32" v-slot="slotProps" :highlighted="playerHighlighted" v-if="progress===1">
       <div :class="'playerRow ' + (slotProps.data.id === playerHighlighted ? 'selected ' : '') + ((slotProps.index + 1)%2 ? 'odd ':'uneven ')" v-on:click="$emit('highlightPlayer', slotProps.data.id)">
         <div><span>{{ slotProps.index+1 }}</span></div>
         <div><span>{{ slotProps.data.value.username }}</span></div>
@@ -30,9 +31,10 @@
 import { defineComponent, PropType, Ref } from 'vue'
 import { useKillStore, Player, Filters } from '@/stores/kill'
 import VirtualList from './List/VirtualList.vue'
+import LoadingBar from './LoadingBar.vue'
 
 export default defineComponent({
-  components: { VirtualList },
+  components: { VirtualList, LoadingBar },
   props: {
     filters: { type: Object as PropType<Filters>, default: () => ({}) },
     playerHighlighted: String
@@ -45,6 +47,10 @@ export default defineComponent({
     }
   },
   computed: {
+    progress () {
+      const { player: _, ...withoutPlayer } = this.filters
+      return this.store.getPlayerList(withoutPlayer)?.value.progress
+    },
     players (): { [key: string]: Ref<Player> } {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayer } = this.filters
@@ -61,7 +67,6 @@ export default defineComponent({
         return player
       }) as (Ref<Player> & { id: string })[]
 
-      const date = new Date()
       if (this.sortingData.argument === 'username') {
         const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
         players.sort((a, b) => {

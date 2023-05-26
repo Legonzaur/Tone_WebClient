@@ -1,7 +1,7 @@
 <template>
   <div class="playerChart" ref="container">
-    <!-- <Scatter :data="chart" :options="chartOptions" /> -->
-    <Scatter :data="chart" :options="chartOptions" />
+    <LoadingBar v-if="progress!==1" :value="progress"></LoadingBar>
+    <Scatter :data="chart" :options="chartOptions" v-if="progress===1" />
   </div>
 </template>
 
@@ -26,6 +26,8 @@ import { defineComponent, PropType, Ref, toRaw, triggerRef, unref } from 'vue'
 import { ChartEvent } from 'chart.js/dist/core/core.plugins'
 import { _DeepPartialObject } from 'chart.js/dist/types/utils'
 
+import LoadingBar from './LoadingBar.vue'
+
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annotationPlugin, dataLabel)
 
 export default defineComponent({
@@ -43,12 +45,19 @@ export default defineComponent({
   },
   emits: ['highlightPlayer'],
   components: {
-    Scatter
+    Scatter, LoadingBar
   },
   mounted () {
     this.refreshColors++
   },
   computed: {
+    progress () {
+      if (this.filters) {
+        const { player: _, ...withoutPlayer } = this.filters
+        return this.store.getPlayerList(withoutPlayer)?.value.progress
+      }
+      return 0
+    },
     playerList (): (Player & {id:string})[] {
       const data = this.store.getPlayerList(this.filters || {})?.value.data
       if (!data) return Object.entries(this.store.fetchPlayers(this.filters || {}).value.data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))

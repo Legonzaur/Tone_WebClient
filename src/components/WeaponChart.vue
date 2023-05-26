@@ -1,6 +1,7 @@
 <template>
   <div class="weaponChart" ref="container">
-    <Doughnut :data="chart" :options="chartOptions" />
+    <LoadingBar v-if="progress !== 1" :value="progress"></LoadingBar>
+    <Doughnut :data="chart" :options="chartOptions" v-if="progress === 1"/>
   </div>
 </template>
 
@@ -12,6 +13,8 @@ import { Doughnut } from 'vue-chartjs'
 import { defineComponent, PropType, Ref } from 'vue'
 import weapons from '../stores/weapons.json'
 
+import LoadingBar from './LoadingBar.vue'
+
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 
 export default defineComponent({
@@ -22,7 +25,7 @@ export default defineComponent({
   },
   emits: ['highlightPlayer'],
   components: {
-    Doughnut
+    Doughnut, LoadingBar
   },
   mounted () {
     this.refreshColors++
@@ -34,6 +37,10 @@ export default defineComponent({
     }
   },
   computed: {
+    progress () {
+      const { weapon: _, ...withoutWeapon } = this.filters || {}
+      return this.store.getWeaponList(withoutWeapon)?.value.progress
+    },
     colors () {
       // eslint-disable-next-line no-unused-expressions
       this.refreshColors
