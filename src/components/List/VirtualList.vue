@@ -36,7 +36,7 @@ export default defineComponent({
   computed: {
     interval () {
       // console.log(this.list.length, this.vIndex + this.toLoad)
-      return [Math.min(this.list.length - this.toLoad, this.vIndex), Math.min(this.vIndex + this.toLoad, this.list.length)]
+      return [Math.max(Math.min(this.list.length - this.toLoad, this.vIndex), 0), Math.min(this.vIndex + this.toLoad, this.list.length)]
     },
     visibleList () {
       return this.list.slice(this.interval[0], this.interval[1])
