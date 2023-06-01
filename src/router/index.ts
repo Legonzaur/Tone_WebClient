@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import ServerView from '../views/ServerView.vue'
-import PlayerView from '../views/PlayerView.vue'
+const ServerView = () => import('../views/ServerView.vue')
+const PlayerView = () => import('../views/PlayerView.vue')
 
 const routes: Array<RouteRecordRaw> = [
   {

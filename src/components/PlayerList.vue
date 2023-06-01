@@ -169,7 +169,7 @@ export default defineComponent({
 .playerHeaders {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 5ch 20ch 6ch 6ch 6ch 10ch 1fr;
+  grid-template-columns: 6ch 20ch 6ch 6ch 6ch 10ch 1fr;
   background: var(--bg-color);
   text-align: left;
   cursor: pointer;
@@ -237,7 +237,7 @@ export default defineComponent({
 
   .playerRow,
   .playerHeaders {
-    grid-template-columns: 5ch 20ch 6ch 6ch 1fr;
+    grid-template-columns: 6ch 20ch 6ch 6ch 1fr;
   }
 }
 
