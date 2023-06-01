@@ -19,7 +19,7 @@
           <div><span>{{ slotProps.index + 1 }}</span></div>
           <img v-if="nsServersByName[slotProps.data.name]"
             :src="`${publicPath}maps/${nsServersByName[slotProps.data.name].map}_lobby.png`" />
-            <div v-if="!nsServersByName[slotProps.data.name]"></div>
+          <div v-if="!nsServersByName[slotProps.data.name]"></div>
           <div><span>{{ slotProps.data.name + (!nsServersByName[slotProps.data.name] ? ' (offline)' : '') }}</span></div>
           <div><span>{{ nsServersByName[slotProps.data.name] ? nsServersByName[slotProps.data.name]?.playerCount
             + '/' + nsServersByName[slotProps.data.name]?.maxPlayers : '' }}</span></div>
@@ -88,10 +88,12 @@ export default defineComponent({
 .offline {
   color: var(--comment);
 }
-.serverView{
+
+.serverView {
   margin: 0 1rem 1rem 1rem;
-  overflow:auto;
+  overflow: auto;
 }
+
 .serverList {
   overflow-y: auto;
   height: 100%;
@@ -115,7 +117,8 @@ export default defineComponent({
   height: 3em;
   background: var(--current-line);
 }
-.serverHeaders > span {
+
+.serverHeaders>span {
   padding: .5em .8em 0 .25em;
 }
 
@@ -131,14 +134,16 @@ export default defineComponent({
   background: var(--current-line);
 }
 
-.serverRow>div{
+.serverRow>div {
   padding: .5em .8em 0 .25em;
 }
-.serverRow>div:not(:last-child){
+
+.serverRow>div:not(:last-child) {
   border-right: solid var(--bg-color) 2px;
 }
 
 img {
   object-fit: contain;
   height: 100%;
+  width: 100%;
 }</style>
