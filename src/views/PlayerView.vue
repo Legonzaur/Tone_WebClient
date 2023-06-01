@@ -186,6 +186,7 @@ export default defineComponent({
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { server: _, weapon: _2, ...withoutFilters } = this.$route.query
         router.push({ query: { ...newValue, ...withoutFilters } })// .then(e => { console.log(e) })
+        this.store.setFilter({ player: this.store.currentFilter.player, ...newValue })
       },
       deep: true
     },
@@ -194,6 +195,7 @@ export default defineComponent({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayer } = this.$route.query
       router.push({ query: { player: newValue?.id, ...withoutPlayer } })// .then(e => { console.log(e) })
+      this.store.setFilter({ player: newValue?.id, ...this.store.currentFilter })
     },
     $route: {
       handler: function () {

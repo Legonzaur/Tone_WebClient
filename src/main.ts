@@ -3,7 +3,7 @@ import { createApp, ref, unref } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import { useKillStore } from './stores/kill'
+import { objectEqual, useKillStore } from './stores/kill'
 
 const pinia = createPinia()
 
@@ -24,7 +24,7 @@ const dummyData = {
   host: 1
 }
 
-// setInterval(() => registerWebSocketKill(dummyData), 100)
+setInterval(() => registerWebSocketKill(dummyData), 100)
 
 type websocketData = {
   attacker_id: string,
@@ -52,113 +52,49 @@ socket.onmessage = function (e) {
 }
 
 function registerWebSocketKill (data : websocketData) {
-  store.$state.players.filter((e) => {
-    return (
-      (!e.value.filter.server ||
-                e.value.filter.server === data.servername) &&
-              (!e.value.filter.weapon ||
-                e.value.filter.weapon === data.cause_of_death)
-    // Handle other types of filters once those are implemented
-    )
-  }).forEach(e => {
-    if (!e.value.data[data.attacker_id]) {
-      e.value.data[data.attacker_id] = ref({
-        deaths: 0,
-        kills: 0,
-        max_distance: 0,
-        total_distance: 0,
-        username: data.attacker_name
-      })
-    }
-    if (!e.value.data[data.victim_id]) {
-      e.value.data[data.victim_id] = ref({
-        deaths: 0,
-        kills: 0,
-        max_distance: 0,
-        total_distance: 0,
-        username: data.victim_name
-      })
-    }
-    // handle deaths with equipped, eventually
-    /*
-    if(e.value.filter.weapon){
-        !e.value.data[data.victim_id] = e.value.data[data.victim_id] = {
-            deaths: 0,
-            kills: 0,
-            max_distance: 0,
-            total_distance: 0,
-            username: data.victim_name,
-          }
-    } */
+  const { player: _, ...filterWithoutPlayer } = store.$state.currentFilter
+  const list = unref(store.$state.players.find((e) => {
+    return objectEqual(filterWithoutPlayer, e.value.filter)
+  }))
+  if (!list) return
+  if (!(!list.filter.server || list.filter.server === data.servername)) return
 
-    unref(e.value.data[data.victim_id]).deaths++
-    unref(e.value.data[data.victim_id]).username = data.victim_name
-    unref(e.value.data[data.attacker_id]).username = data.attacker_name
-    if (data.attacker_id !== data.victim_id) {
-      unref(e.value.data[data.attacker_id]).kills++
-      unref(e.value.data[data.attacker_id]).total_distance += data.distance
-      unref(e.value.data[data.attacker_id]).max_distance = Math.max(data.distance, unref(e.value.data[data.attacker_id]).max_distance)
-    }
-  })
-  store.$state.weapons.filter((e) => {
-    return (
-      (!e.value.filter.server ||
-        e.value.filter.server === data.servername) &&
-      (!e.value.filter.player || e.value.filter.player === data.attacker_id)
-    // Handle other types of filters once those are implemented
-    )
-  }).forEach(e => {
-    if (!e.value.data[data.cause_of_death]) {
-      e.value.data[data.cause_of_death] = ref({
-        deaths: 0,
-        kills: 0,
-        max_distance: 0,
-        total_distance: 0,
-        deaths_while_equipped: 0
-      })
-    }
-    // handle deaths with equipped, eventually
-    /*
-    if(e.value.filter.weapon){
-        !e.value.data[data.victim_id] = e.value.data[data.victim_id] = {
-            deaths: 0,
-            kills: 0,
-            max_distance: 0,
-            total_distance: 0,
-            username: data.victim_name,
-          }
-    } */
+  const WeaponFilter = (!list.filter.weapon || list.filter.weapon === data.cause_of_death)
+  const CurrentWeaponFilter = list.filter.weapon === data.attacker_current_weapon
+  if (!(WeaponFilter || CurrentWeaponFilter)) return
 
-    if (data.attacker_id !== data.victim_id) {
-      unref(e.value.data[data.cause_of_death]).kills++
-      unref(e.value.data[data.cause_of_death]).total_distance += data.distance
-      unref(e.value.data[data.cause_of_death]).max_distance = Math.max(data.distance, unref(e.value.data[data.cause_of_death]).max_distance)
-    }
-    unref(e.value.data[data.cause_of_death]).deaths++
-  })
-  store.$state.servers.filter((e) => {
-    return (
-      (!e.value.filter.server ||
-                e.value.filter.server === data.servername)
-    // Handle other types of filters once those are implemented
-    )
-  }).forEach((e) => {
-    if (!e.value.data[data.servername]) {
-      e.value.data[data.servername] = ref({
-        deaths: 0,
-        kills: 0,
-        max_distance: 0,
-        total_distance: 0,
-        deaths_while_equipped: 0,
-        host: data.host
-      })
-    }
+  if (!list.data[data.victim_id]) {
+    list.data[data.victim_id] = ref({
+      deaths: 0,
+      deaths_while_equipped: 0,
+      kills: 0,
+      max_distance: 0,
+      total_distance: 0,
+      username: data.victim_name
+    })
+  }
+  if (WeaponFilter) {
+    unref(list.data[data.victim_id]).deaths++
+  } else if (CurrentWeaponFilter) {
+    unref(list.data[data.victim_id]).deaths_while_equipped++
+  }
 
-    if (data.attacker_id !== data.victim_id) {
-      unref(e.value.data[data.servername]).kills++
-      unref(e.value.data[data.servername]).total_distance += data.distance
-      unref(e.value.data[data.servername]).max_distance = Math.max(data.distance, unref(e.value.data[data.servername]).max_distance)
-    }
-    unref(e.value.data[data.servername]).deaths++
-  })
+  if (!list.data[data.attacker_id]) {
+    list.data[data.attacker_id] = ref({
+      deaths: 0,
+      deaths_while_equipped: 0,
+      kills: 0,
+      max_distance: 0,
+      total_distance: 0,
+      username: data.attacker_name
+    })
+  }
+  if (data.attacker_id !== data.victim_id) {
+    unref(list.data[data.attacker_id]).kills++
+    unref(list.data[data.attacker_id]).total_distance += data.distance
+    unref(list.data[data.attacker_id]).max_distance = Math.max(data.distance, unref(list.data[data.attacker_id]).max_distance)
+  }
+
+  unref(list.data[data.victim_id]).username = data.victim_name
+  unref(list.data[data.attacker_id]).username = data.attacker_name
 }

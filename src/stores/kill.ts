@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import * as assert from 'assert'
-import { Ref, reactive, ref, shallowRef, triggerRef, unref } from 'vue'
+import { Ref, ref, shallowRef, triggerRef, unref } from 'vue'
 
 export interface Filters {
   server?: string;
@@ -11,12 +11,12 @@ export interface Filters {
   gamemode?: string;
 }
 
-function removeNullEntries (a: Filters) {
+export function removeNullEntries (a: Filters) {
   return Object.fromEntries(
     Object.entries(a).filter((e) => e[1] !== undefined && e[1] !== null)
   )
 }
-function objectEqual (a: Filters, b: Filters) {
+export function objectEqual (a: Filters, b: Filters) {
   try {
     a = removeNullEntries(a)
     b = removeNullEntries(b)
@@ -83,6 +83,8 @@ function fetchWithLoading (url: string, progress: (percentage: number) => void) 
 
 export interface Kill {
   deaths: number;
+  // eslint-disable-next-line camelcase
+  deaths_while_equipped:number
   kills: number;
   // eslint-disable-next-line camelcase
   max_distance: number;
@@ -129,7 +131,8 @@ export interface State {
   maps: Ref<KillData<Kill>>[];
   gamemodes: Ref<KillData<Kill>>[];
   hosts: { [key: number]: string };
-  nsServers: NSServer[] | undefined
+  nsServers: NSServer[] | undefined;
+  currentFilter:Filters;
 }
 
 let serverInterval: number
@@ -141,7 +144,8 @@ export const useKillStore = defineStore('kill', {
     maps: [],
     gamemodes: [],
     hosts: {},
-    nsServers: undefined
+    nsServers: undefined,
+    currentFilter: {}
   }),
   getters: {
     getPlayerList: (state) => (filters: Filters) => {
@@ -165,7 +169,7 @@ export const useKillStore = defineStore('kill', {
         'https://tone.sleepycat.date/v2/client/players?' +
         new URLSearchParams(filter as Record<keyof Filters, string>),
         (progress) => {
-          if (entry) {
+          if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
             if (progress !== 1) triggerRef(entry)
           }
@@ -190,7 +194,7 @@ export const useKillStore = defineStore('kill', {
         'https://tone.sleepycat.date/v2/client/weapons?' +
         new URLSearchParams(filter as Record<keyof Filters, string>),
         (progress) => {
-          if (entry) {
+          if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
             if (progress !== 1) triggerRef(entry)
           }
@@ -214,7 +218,7 @@ export const useKillStore = defineStore('kill', {
         'https://tone.sleepycat.date/v2/client/servers?' +
         new URLSearchParams(filter as Record<keyof Filters, string>),
         (progress) => {
-          if (entry) {
+          if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
             if (progress !== 1) triggerRef(entry)
           }
@@ -235,6 +239,18 @@ export const useKillStore = defineStore('kill', {
       clearInterval(serverInterval)
       serverInterval = setInterval(() => this.fetchNSServers(), 60000)
       return this.nsServers || []
+    },
+    setFilter (filter:Filters) {
+      this.currentFilter = filter
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { player: _player, ...withoutPlayers } = this.currentFilter
+      this.fetchPlayers(withoutPlayers)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { weapon: _weapon, ...withoutWeapon } = this.currentFilter
+      this.fetchWeapons(withoutWeapon)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { server: _server, ...withoutServer } = this.currentFilter
+      this.fetchWeapons(withoutServer)
     }
   }
 })
