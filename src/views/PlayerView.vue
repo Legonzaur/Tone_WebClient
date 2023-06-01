@@ -195,7 +195,7 @@ export default defineComponent({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { player: _, ...withoutPlayer } = this.$route.query
       router.push({ query: { player: newValue?.id, ...withoutPlayer } })// .then(e => { console.log(e) })
-      this.store.setFilter({ player: newValue?.id, ...this.store.currentFilter })
+      this.store.setFilter({ ...this.store.currentFilter, player: newValue?.id })
     },
     $route: {
       handler: function () {

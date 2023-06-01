@@ -241,16 +241,16 @@ export const useKillStore = defineStore('kill', {
       return this.nsServers || []
     },
     setFilter (filter:Filters) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { player: _player, ...withoutPlayers } = filter
+      if (this.currentFilter.player === _player) { this.fetchPlayers(withoutPlayers) }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { weapon: _weapon, ...withoutWeapon } = filter
+      if (this.currentFilter.weapon === _weapon) { this.fetchWeapons(withoutWeapon) }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { server: _server, ...withoutServer } = filter
+      // if (this.currentFilter.server === _server) { this.fetchServers(withoutServer) }
       this.currentFilter = filter
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { player: _player, ...withoutPlayers } = this.currentFilter
-      this.fetchPlayers(withoutPlayers)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { weapon: _weapon, ...withoutWeapon } = this.currentFilter
-      this.fetchWeapons(withoutWeapon)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { server: _server, ...withoutServer } = this.currentFilter
-      this.fetchWeapons(withoutServer)
     }
   }
 })

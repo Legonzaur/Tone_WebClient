@@ -24,7 +24,7 @@ const dummyData = {
   host: 1
 }
 
-setInterval(() => registerWebSocketKill(dummyData), 100)
+// setInterval(() => registerWebSocketKill(dummyData), 100)
 
 type websocketData = {
   attacker_id: string,
