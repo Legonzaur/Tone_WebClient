@@ -3,7 +3,7 @@ import { createApp, ref, unref } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import { objectEqual, useKillStore } from './stores/kill'
+import { Kill, KillData, objectEqual, useKillStore } from './stores/kill'
 
 const pinia = createPinia()
 
@@ -97,4 +97,14 @@ function registerWebSocketKill (data : websocketData) {
 
   unref(list.data[data.victim_id]).username = data.victim_name
   unref(list.data[data.attacker_id]).username = data.attacker_name
+  const serverlist = store.getServerList({})
+  if (serverlist) {
+    const server = unref(unref(serverlist).data[data.servername])
+    if (server) {
+      server.kills++
+      server.deaths++
+      server.total_distance += data.distance
+      server.max_distance = Math.max(data.distance, server.max_distance)
+    }
+  }
 }
