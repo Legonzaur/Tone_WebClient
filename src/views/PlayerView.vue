@@ -8,9 +8,26 @@
         v-model="model.server"
         :options="sortedServerList"
         :allow-empty="true"
+        :close-on-select="false"
+        :multiple="true"
       >
       </VueMultiselect>
       <button @click="model.server = undefined" :disabled="!model.server">X</button>
+    </span>
+
+    <span class="multiselect-wrapper">
+      <VueMultiselect
+        selectLabel=""
+        deselectLabel="remove"
+        placeholder="Select gamemode"
+        v-model="model.gamemode"
+        :options="sortedGamemodeList"
+        :allow-empty="true"
+        :close-on-select="false"
+        :multiple="true"
+      >
+      </VueMultiselect>
+      <button @click="model.gamemode = undefined" :disabled="!model.gamemode">X</button>
     </span>
 
     <span class="multiselect-wrapper">
@@ -40,6 +57,7 @@
       ></VueMultiselect>
       <button @click="playerHighlighted = undefined" :disabled="!playerHighlighted">X</button>
     </span>
+    <button @click="applyFilters" :disabled="filters.server == model.server && filters.gamemode == model.gamemode && filters.weapon == model.weapon">Apply Filters</button>
   </div>
 
   <div id="playerView">
@@ -65,7 +83,7 @@
 </template>
 
 <script lang="ts">
-import { Player, Weapon, Server, useKillStore, Filters } from '@/stores/kill'
+import { Player, Weapon, Server, Kill, useKillStore, Filters } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
@@ -87,8 +105,9 @@ export default defineComponent({
   data () {
     return {
       model: { server: undefined, weapon: undefined } as unknown as {
-        weapon: string | undefined;
-        server: string | undefined;
+        weapon: string[] | undefined;
+        server: string[] | undefined;
+        gamemode: string[] | undefined;
       },
       filters: {} as Filters,
       store: useKillStore(),
@@ -98,10 +117,13 @@ export default defineComponent({
   },
   beforeCreate () {
     let server
-    if (this.$route.query.server) server = this.$route.query.server?.toString()
+    if (this.$route.query.server) server = [this.$route.query.server?.toString()]
     this.model = {
       server,
-      weapon: this.$route.query.weapon?.toString()
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      weapon: [this.$route.query.weapon].flat().filter(e => e ?? false).map(e => e!.toString()),
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      gamemode: [this.$route.query.gamemode].flat().filter(e => e ?? false).map(e => e!.toString())
     }
   },
   computed: {
@@ -140,6 +162,13 @@ export default defineComponent({
       if (!data) return this.store.fetchPlayers(withoutPlayers).value.data
       return data
     },
+    gamemodes (): { [key: string]: Ref<Kill> } {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { gamemode: _, player: _1, ...withoutGamemode } = this.filters
+      const data = this.store.getGamemodeList(withoutGamemode)?.value.data
+      if (!data) return this.store.fetchGamemodes(withoutGamemode).value.data
+      return data
+    },
     sortedWeaponList (): string[] {
       if (!this.weapons) return []
       const weapons = Object.keys(this.weapons)
@@ -149,6 +178,11 @@ export default defineComponent({
       if (!this.servers) return []
       const servers = Object.keys(this.servers)
       return servers.sort()
+    },
+    sortedGamemodeList (): string[] {
+      if (!this.gamemodes) return []
+      const gamemodes = Object.keys(this.gamemodes)
+      return gamemodes.sort()
     },
     sortedPlayerList (): Player[] {
       if (!this.players) return []
@@ -174,17 +208,10 @@ export default defineComponent({
         this.highlight_player(player)
       }
     },
-    model: {
-      handler (newModel) {
-        this.filters.server = newModel.server
-        this.filters.weapon = newModel.weapon
-      },
-      deep: true
-    },
     filters: {
       handler (newValue) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { server: _, weapon: _2, ...withoutFilters } = this.$route.query
+        const { server: _, weapon: _2, gamemode: _3, ...withoutFilters } = this.$route.query
         router.push({ query: { ...newValue, ...withoutFilters } })// .then(e => { console.log(e) })
         this.store.setFilter({ player: this.store.currentFilter.player, ...newValue })
       },
@@ -205,6 +232,11 @@ export default defineComponent({
     }
   },
   methods: {
+    applyFilters () {
+      this.filters.server = this.model.server
+      this.filters.weapon = this.model.weapon
+      this.filters.gamemode = this.model.gamemode
+    },
     highlight_player (playerid: string) {
       const player = this.players[playerid]
       if (player) {
@@ -221,12 +253,18 @@ export default defineComponent({
         }
       }
       if (this.filters.weapon !== this.$route.query.weapon) {
-        this.model.weapon = this.$route.query.weapon?.toString()
+        this.model.weapon = [this.$route.query.weapon].flat().filter(e => e ?? false).map(e => e!.toString())
       }
       if (this.filters.server !== this.$route.query.server) {
-        if (this.$route.query.server) this.model.server = this.$route.query.server?.toString()
+        if (this.$route.query.server) this.model.server = [this.$route.query.server].flat().filter(e => e ?? false).map(e => e!.toString())
         else this.model.server = undefined
       }
+      if (this.filters.gamemode !== this.$route.query.gamemode) {
+        if (this.$route.query.gamemode) this.model.gamemode = [this.$route.query.gamemode].flat().filter(e => e ?? false).map(e => e!.toString())
+        else this.model.gamemode = undefined
+      }
+
+      console.log(this.model, this.$route.query)
     }
   }
 })

@@ -3,12 +3,12 @@ import * as assert from 'assert'
 import { Ref, ref, shallowRef, triggerRef, unref } from 'vue'
 
 export interface Filters {
-  server?: string;
+  server?: string[];
   player?: string;
-  weapon?: string;
-  host?: string;
-  map?: string;
-  gamemode?: string;
+  weapon?: string[];
+  host?: string[];
+  map?: string[];
+  gamemode?: string[];
 }
 
 export function removeNullEntries (a: Filters) {
@@ -155,6 +155,8 @@ export const useKillStore = defineStore('kill', {
       state.weapons.find((e) => objectEqual(unref(e).filter, filters)),
     getServerList: (state) => (filters: Filters) =>
       state.servers.find((e) => objectEqual(unref(e).filter, filters)),
+    getGamemodeList: (state) => (filters: Filters) =>
+      state.gamemodes.find((e) => objectEqual(unref(e).filter, filters)),
     getNSServers: (state) => state.nsServers
   },
   actions: {
@@ -167,7 +169,7 @@ export const useKillStore = defineStore('kill', {
       }
       fetchWithLoading(
         'https://tone.sleepycat.date/v2/client/players?' +
-        new URLSearchParams(filter as Record<keyof Filters, string>),
+        new URLSearchParams(Object.entries(filter).map<string[][]>(e => [e[1]].flat().map(v => [e[0], v])).flat(1)),
         (progress) => {
           if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
@@ -192,7 +194,7 @@ export const useKillStore = defineStore('kill', {
 
       fetchWithLoading(
         'https://tone.sleepycat.date/v2/client/weapons?' +
-        new URLSearchParams(filter as Record<keyof Filters, string>),
+        new URLSearchParams(Object.entries(filter).map<string[][]>(e => [e[1]].flat().map(v => [e[0], v])).flat(1)),
         (progress) => {
           if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
@@ -216,7 +218,7 @@ export const useKillStore = defineStore('kill', {
       }
       fetchWithLoading(
         'https://tone.sleepycat.date/v2/client/servers?' +
-        new URLSearchParams(filter as Record<keyof Filters, string>),
+        new URLSearchParams(Object.entries(filter).map<string[][]>(e => [e[1]].flat().map(v => [e[0], v])).flat(1)),
         (progress) => {
           if (entry && unref(entry).progress !== 1) {
             unref(entry).progress = progress
@@ -226,6 +228,30 @@ export const useKillStore = defineStore('kill', {
       ).then(async response => {
         if (entry) {
           unref(entry).data = Object.fromEntries(Object.entries(await response?.json()).map(e => [e[0], ref(e[1] as Server)]))
+          triggerRef(entry)
+        }
+      })
+      return entry
+    },
+    fetchGamemodes (filter: Filters) {
+      filter = removeNullEntries(filter)
+      let entry = this.gamemodes.find((e) => objectEqual(unref(e).filter, filter))
+      if (!entry) {
+        entry = shallowRef({ filter, data: {} })
+        this.gamemodes.push(entry)
+      }
+      fetchWithLoading(
+        'https://tone.sleepycat.date/v2/client/gamemodes?' +
+        new URLSearchParams(Object.entries(filter).map<string[][]>(e => [e[1]].flat().map(v => [e[0], v])).flat(1)),
+        (progress) => {
+          if (entry && unref(entry).progress !== 1) {
+            unref(entry).progress = progress
+            if (progress !== 1) triggerRef(entry)
+          }
+        }
+      ).then(async response => {
+        if (entry) {
+          unref(entry).data = Object.fromEntries(Object.entries(await response?.json()).map(e => [e[0], ref(e[1] as Kill)]))
           triggerRef(entry)
         }
       })
