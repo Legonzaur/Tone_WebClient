@@ -19,7 +19,7 @@ import {
 } from 'chart.js'
 import annotationPlugin, { AnnotationPluginOptions } from 'chartjs-plugin-annotation'
 import dataLabel from 'chartjs-plugin-datalabels'
-import { useKillStore, Player, Filters } from '@/stores/kill'
+import { useKillStore, Player, Filter } from '@/stores/kill'
 
 import { Scatter } from 'vue-chartjs'
 import { defineComponent, PropType, Ref, toRaw, triggerRef, unref } from 'vue'
@@ -33,7 +33,7 @@ ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend, annota
 export default defineComponent({
   name: 'PlayerChart',
   props: {
-    filters: Object as PropType<Filters>,
+    filters: Object as PropType<Filter>,
     playerHighlighted: String
   },
   data: () => {
@@ -53,14 +53,17 @@ export default defineComponent({
   computed: {
     progress () {
       if (this.filters) {
-        const { player: _, ...withoutPlayer } = this.filters
-        return this.store.getPlayerList(withoutPlayer)?.value.progress
+        const filter = new Filter(this.filters)
+        delete filter.player
+        return this.store.getList('players', filter)?.value.progress
       }
       return 0
     },
     playerList (): (Player & {id:string})[] {
-      const data = this.store.getPlayerList(this.filters || {})?.value.data
-      if (!data) return Object.entries(this.store.fetchPlayers(this.filters || {}).value.data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))
+      const filter = new Filter(this.filters)
+      delete filter.player
+      const data = unref(this.store.getList('players', filter))?.data
+      if (!data) return Object.entries(this.store.fetch('players', filter).value.data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))
       const cut = Object.entries(data).map(e => ({ id: e[0], ...toRaw(e[1].value) }))
       cut.sort((a, b) => {
         return b.kills - a.kills
@@ -140,7 +143,6 @@ export default defineComponent({
         },
         onClick: (e: ChartEvent, element: any) => {
           this.$emit('highlightPlayer', element.length > 0 ? this.playerList[element[0].index].id : undefined)
-          if (this.store.getPlayerList(this.filters || {}) !== undefined) triggerRef(this.store.getPlayerList(this.filters || {}) as unknown as Ref)
         },
         onHover: (e: any, element: any) => {
           if (!e.native.target) return

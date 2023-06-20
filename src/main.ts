@@ -3,7 +3,7 @@ import { createApp, ref, unref } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import { Kill, KillData, objectEqual, useKillStore } from './stores/kill'
+import { Filter, Kill, KillData, useKillStore } from './stores/kill'
 
 const pinia = createPinia()
 
@@ -48,22 +48,21 @@ const socket = new WebSocket('wss://tone.sleepycat.date/v2/client/websocket')
 socket.onmessage = function (e) {
   if (e.data === 'ping') return socket.send('pong')
   const data = JSON.parse(e.data)
-  registerWebSocketKill(data)
+//  registerWebSocketKill(data)
 }
 
 function registerWebSocketKill (data : websocketData) {
   const { player: _, ...filterWithoutPlayer } = store.$state.currentFilter
-  const list = unref(store.$state.players.find((e) => {
-    return objectEqual(filterWithoutPlayer, e.value.filter)
-  }))
+  const filter = new Filter(filterWithoutPlayer)
+  const list = unref(store.getList('players', filter))
   if (!list) return
-  if (!(!list.filter.server || list.filter.server.includes(data.servername))) return
+  if (!(!filter.server || filter.server.includes(data.servername))) return
 
-  const WeaponFilter = (!list.filter.weapon || list.filter.weapon.includes(data.cause_of_death))
-  const CurrentWeaponFilter = list.filter.weapon?.includes(data.attacker_current_weapon)
+  const WeaponFilter = (!filter.weapon || filter.weapon.includes(data.cause_of_death))
+  const CurrentWeaponFilter = filter.weapon?.includes(data.attacker_current_weapon)
   if (!(WeaponFilter || CurrentWeaponFilter)) return
 
-  if (!(!list.filter.gamemode || list.filter.gamemode.includes(data.game_mode))) return
+  if (!(!filter.gamemode || filter.gamemode.includes(data.game_mode))) return
 
   if (!list.data[data.victim_id]) {
     list.data[data.victim_id] = ref({
@@ -99,7 +98,7 @@ function registerWebSocketKill (data : websocketData) {
 
   unref(list.data[data.victim_id]).username = data.victim_name
   unref(list.data[data.attacker_id]).username = data.attacker_name
-  const serverlist = store.getServerList({})
+  const serverlist = store.getList('servers')
   if (serverlist) {
     const server = unref(unref(serverlist).data[data.servername])
     if (server) {

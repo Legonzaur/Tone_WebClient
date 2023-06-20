@@ -8,9 +8,9 @@
 <script lang="ts">
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import dataLabel from 'chartjs-plugin-datalabels'
-import { Weapon, Filters, useKillStore } from '@/stores/kill'
+import { Weapon, Filter, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
-import { defineComponent, PropType, Ref } from 'vue'
+import { defineComponent, PropType, Ref, unref } from 'vue'
 import weapons from '../stores/weapons.json'
 
 import LoadingBar from './LoadingBar.vue'
@@ -20,7 +20,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 export default defineComponent({
   name: 'WeaponChart',
   props: {
-    filters: Object as PropType<Filters>,
+    filters: Object as PropType<Filter>,
     playerHighlighted: String
   },
   emits: ['highlightPlayer'],
@@ -38,9 +38,10 @@ export default defineComponent({
   },
   computed: {
     progress () {
-      const { weapon: _, ...withoutWeapon } = this.filters || {}
-      const data = this.store.getWeaponList(withoutWeapon)?.value
-      if (!data) return this.store.fetchWeapons(withoutWeapon).value.progress
+      const filter = new Filter(this.filters)
+      delete filter.weapon
+      const data = this.store.getList('weapons', filter)?.value
+      if (!data) return this.store.fetch('weapons', filter).value.progress
       return data.progress
     },
     colors () {
@@ -148,19 +149,21 @@ export default defineComponent({
       return options
     },
     weapons (): { [key: string]: Ref<Weapon> } {
-      const { weapon: _, ...withoutWeapon } = this.filters || {}
-      const data = this.store.getWeaponList(withoutWeapon)?.value.data
-      if (!data) return this.store.fetchWeapons(withoutWeapon).value.data
+      const filter = new Filter({ ...this.filters, player: this.playerHighlighted })
+      delete filter.weapon
+      const data = this.store.getList('weapons', filter)?.value.data
+      if (!data) return this.store.fetch('weapons', filter).value.data
+      console.log(filter.toURLSearchParams().toString(), filter)
       return data
     },
     sortedWeaponList (): string[] {
       if (!this.weapons) return []
-      const weapons = Object.keys(this.weapons).filter(e => this.weapons[e].value.kills > 0)
+      const weapons = Object.keys(this.weapons).filter(e => unref(this.weapons[e]).kills > 0)
       weapons.sort((a, b) => {
-        if (Number(this.weapons[a].value.kills) < Number(this.weapons[b].value.kills)) {
+        if (Number(this.weapons[a].value.kills) < Number(unref(this.weapons[b]).kills)) {
           return -1
         }
-        if (Number(this.weapons[a].value.kills) > Number(this.weapons[b].value.kills)) {
+        if (Number(this.weapons[a].value.kills) > Number(unref(this.weapons[b]).kills)) {
           return 1
         }
         return 0

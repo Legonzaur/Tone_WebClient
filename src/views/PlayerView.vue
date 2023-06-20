@@ -61,14 +61,14 @@
   </div>
 
   <div id="playerView">
-    <PlayerList
+     <PlayerList
       :filters="filters"
       v-on:highlightPlayer="highlight_player"
       :playerHighlighted="playerHighlighted?.id"
     >
     </PlayerList>
 
-    <PlayerChart
+     <PlayerChart
       :filters="filters"
       v-on:highlightPlayer="highlight_player"
       :playerHighlighted="playerHighlighted?.id"
@@ -83,7 +83,7 @@
 </template>
 
 <script lang="ts">
-import { Player, Weapon, Server, Kill, useKillStore, Filters } from '@/stores/kill'
+import { Player, Weapon, Server, Kill, useKillStore, Filter } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
@@ -109,7 +109,7 @@ export default defineComponent({
         server: string[] | undefined;
         gamemode: string[] | undefined;
       },
-      filters: {} as Filters,
+      filters: new Filter(),
       store: useKillStore(),
       playerHighlighted: undefined as (Player & { id: string }) | undefined,
       weaponLocale: weapons as { [key: string]: string }
@@ -128,10 +128,10 @@ export default defineComponent({
   },
   computed: {
     servers (): { [key: string]: Ref<Server> } {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { server: _, player: _1, ...withoutServer } = this.filters
-      const data = this.store.getServerList(withoutServer)?.value.data
-      if (!data) return unref(this.store.fetchServers(withoutServer)).data
+      const filter = new Filter(this.filters)
+      delete filter.server
+      const data = this.store.getList('servers', filter)?.value.data
+      if (!data) return unref(this.store.fetch('servers', filter)).data
       return data
     },
     groupedServers () {
@@ -149,24 +149,26 @@ export default defineComponent({
       return hosts
     },
     weapons (): { [key: string]: Ref<Weapon> } {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { weapon: _, player: _1, ...withoutWeapons } = this.filters
-      const data = this.store.getWeaponList(withoutWeapons)?.value.data
-      if (!data) return this.store.fetchWeapons(withoutWeapons).value.data
+      const filter = new Filter(this.filters)
+      delete filter.weapon
+      delete filter.player
+      const data = this.store.getList('weapons', filter)?.value.data
+      if (!data) return this.store.fetch('weapons', filter).value.data
       return data
     },
     players (): { [key: string]: Ref<Player> } {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { player: _, ...withoutPlayers } = this.filters
-      const data = this.store.getPlayerList(withoutPlayers)?.value.data
-      if (!data) return this.store.fetchPlayers(withoutPlayers).value.data
+      const filter = new Filter(this.filters)
+      delete filter.player
+      const data = this.store.getList('players', filter)?.value.data
+      if (!data) return this.store.fetch('players', filter).value.data
       return data
     },
     gamemodes (): { [key: string]: Ref<Kill> } {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { gamemode: _, player: _1, ...withoutGamemode } = this.filters
-      const data = this.store.getGamemodeList(withoutGamemode)?.value.data
-      if (!data) return this.store.fetchGamemodes(withoutGamemode).value.data
+      const filter = new Filter(this.filters)
+      delete filter.gamemode
+      delete filter.player
+      const data = this.store.getList('gamemodes', filter)?.value.data
+      if (!data) return this.store.fetch('gamemodes', filter).value.data
       return data
     },
     sortedWeaponList (): string[] {
@@ -263,8 +265,6 @@ export default defineComponent({
         if (this.$route.query.gamemode) this.model.gamemode = [this.$route.query.gamemode].flat().filter(e => e ?? false).map(e => e!.toString())
         else this.model.gamemode = undefined
       }
-
-      console.log(this.model, this.$route.query)
     }
   }
 })

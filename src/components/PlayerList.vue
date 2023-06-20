@@ -28,15 +28,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, Ref } from 'vue'
-import { useKillStore, Player, Filters } from '@/stores/kill'
+import { defineComponent, PropType, Ref, isRef } from 'vue'
+import { useKillStore, Player, Filter } from '@/stores/kill'
 import VirtualList from './List/VirtualList.vue'
 import LoadingBar from './LoadingBar.vue'
+import { cloneProxy } from 'vue-chartjs/dist/utils'
 
 export default defineComponent({
   components: { VirtualList, LoadingBar },
   props: {
-    filters: { type: Object as PropType<Filters>, default: () => ({}) },
+    filters: { type: Object as PropType<Filter>, default: () => ({}) },
     playerHighlighted: String
   },
   emits: ['highlightPlayer'],
@@ -48,17 +49,26 @@ export default defineComponent({
   },
   computed: {
     progress () {
-      const { player: _, ...withoutPlayer } = this.filters
-      return this.store.getPlayerList(withoutPlayer)?.value.progress
+      const filter = new Filter(this.filters)
+      delete filter.player
+      return this.store.getList('players', filter)?.value.progress
     },
     players (): { [key: string]: Ref<Player> } {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { player: _, ...withoutPlayer } = this.filters
-      const data = this.store.getPlayerList(withoutPlayer)?.value.data
-      if (!data) return this.store.fetchPlayers(withoutPlayer).value.data
+      const filter = new Filter(this.filters)
+      delete filter.player
+      const data = this.store.getList('players', filter)?.value.data
+      if (!data) return this.store.fetch('players', filter).value.data
+      console.log(isRef(data), isRef(Object.values(data)[0]))
       return data
     },
     playerList (): (Ref<Player> & { id: string })[] {
+      const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
+      const sortingFunctions = {
+        'k/d': ({ _rawValue: aVal }, { _rawValue: bVal }) => aVal.kills / Math.max(1, aVal.deaths) - bVal.kills / Math.max(1, bVal.deaths),
+        avg_distance: ({ _rawValue: aVal }, { _rawValue: bVal }) => ((aVal.total_distance / aVal.kills) || 0) - ((bVal.total_distance / bVal.kills) || 0),
+        username: ({ _rawValue: aVal }, { _rawValue: bVal }) => collator.compare(aVal.username, bVal.username)
+      } as {[k: string]: (a:Ref<Player>, b:Ref<Player>)=>number}
+
       if (!this.players) return []
       const players = Object.entries(this.players).map(e => {
         const target = {} as ProxyHandler<Ref<Player>>
@@ -67,30 +77,10 @@ export default defineComponent({
         return player
       }) as (Ref<Player> & { id: string })[]
 
-      if (this.sortingData.argument === 'username') {
-        const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
-        players.sort((a, b) => {
-          // Hack because toRaw is slow as fuck
-          const aVal = a._rawValue
-          const bVal = b._rawValue
-          return collator.compare(aVal.username, bVal.username)
-        })
-      } else if (this.sortingData.argument === 'k/d') {
-        players.sort((a, b) => {
-          // Hack because toRaw is slow as fuck
-          const aVal = a._rawValue
-          const bVal = b._rawValue
-          return aVal.kills / Math.max(1, aVal.deaths) - bVal.kills / Math.max(1, bVal.deaths)
-        })
-      } else if (this.sortingData.argument === 'avg_distance') {
-        players.sort((a, b) => {
-          // Hack because toRaw is slow as fuck
-          const aVal = a._rawValue
-          const bVal = b._rawValue
-          return ((aVal.total_distance / aVal.kills) || 0) - ((bVal.total_distance / bVal.kills) || 0)
-        })
+      if (this.sortingData.argument in sortingFunctions) {
+        players.sort(sortingFunctions[this.sortingData.argument])
       } else {
-        const argument = this.sortingData.argument
+        const argument = this.sortingData.argument as Exclude<keyof Player, 'username' | 'avg_distance'>
         players.sort((a, b) => {
           // Hack because toRaw is slow as fuck
           const aVal = a._rawValue

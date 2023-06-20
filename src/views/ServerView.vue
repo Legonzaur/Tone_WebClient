@@ -52,8 +52,8 @@ export default defineComponent({
   },
   computed: {
     servers (): { [key: string]: Ref<Server> } {
-      const data = this.store.getServerList({})?.value.data
-      if (!data) return unref(this.store.fetchServers({})).data
+      const data = this.store.getList('servers')?.value.data
+      if (!data) return unref(this.store.fetch('servers')).data
       return data
     },
     serverList (): (Ref<Server> & { name: string })[] {
