@@ -57,13 +57,11 @@ function registerWebSocketKill (data : websocketData) {
     return objectEqual(filterWithoutPlayer, e.value.filter)
   }))
   if (!list) return
-  if (!(!list.filter.server || list.filter.server.includes(data.servername))) return
+  if (!(!list.filter.server || list.filter.server === data.servername)) return
 
-  const WeaponFilter = (!list.filter.weapon || list.filter.weapon.includes(data.cause_of_death))
-  const CurrentWeaponFilter = list.filter.weapon?.includes(data.attacker_current_weapon)
+  const WeaponFilter = (!list.filter.weapon || list.filter.weapon === data.cause_of_death)
+  const CurrentWeaponFilter = list.filter.weapon === data.attacker_current_weapon
   if (!(WeaponFilter || CurrentWeaponFilter)) return
-
-  if (!(!list.filter.gamemode || list.filter.gamemode.includes(data.game_mode))) return
 
   if (!list.data[data.victim_id]) {
     list.data[data.victim_id] = ref({
