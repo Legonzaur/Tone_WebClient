@@ -22,7 +22,7 @@ import dataLabel from 'chartjs-plugin-datalabels'
 import { useKillStore, Player, Filter } from '@/stores/kill'
 
 import { Scatter } from 'vue-chartjs'
-import { defineComponent, PropType, Ref, toRaw, triggerRef, unref } from 'vue'
+import { defineComponent, PropType, toRaw, unref } from 'vue'
 import { ChartEvent } from 'chart.js/dist/core/core.plugins'
 import { _DeepPartialObject } from 'chart.js/dist/types/utils'
 
@@ -55,7 +55,7 @@ export default defineComponent({
       if (this.filters) {
         const filter = new Filter(this.filters)
         delete filter.player
-        return this.store.getList('players', filter)?.value.progress
+        return this.store.getList('players', filter)?.value.progress.value
       }
       return 0
     },

@@ -1,0 +1,19 @@
+{
+  "private_match": "Private Match",
+  "aitdm": "Attrition",
+  "at": "Bounty Hunt",
+  "coliseum": "Coliseum",
+  "cp": "Amped Hardpoint",
+  "ctf": "Capture the Flag",
+  "fw": "Frontier War",
+  "lts": "Last Titan Standing",
+  "mfd": "Marked For Death",
+  "ps": "Pilots vs. Pilots",
+  "solo": "Campaign",
+  "tdm": "Skirmish",
+  "ttdm": "Titan Brawl",
+  "sns": "Stick and Stones",
+  "gg": "GunGame",
+  "fd": "Frontier Defense",
+  "ffa": "Free For All"
+}

@@ -52,8 +52,8 @@ socket.onmessage = function (e) {
 }
 
 function registerWebSocketKill (data : websocketData) {
-  const { player: _, ...filterWithoutPlayer } = store.$state.currentFilter
-  const filter = new Filter(filterWithoutPlayer)
+  const filter = new Filter(store.$state.currentFilter)
+  delete filter.player
   const list = unref(store.getList('players', filter))
   if (!list) return
   if (!(!filter.server || filter.server.includes(data.servername))) return

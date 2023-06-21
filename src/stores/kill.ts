@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Ref, ref, shallowRef, triggerRef, unref, isRef } from 'vue'
+import { Ref, ref, shallowRef, triggerRef, unref } from 'vue'
 
 export class Filter {
   constructor (filt?:{server?:string[], player?: string, weapon?: string[], host?: string[], map?: string[], gamemode?: string[]}) {
@@ -53,7 +53,10 @@ function fetchWithLoading (url: string, progress: (percentage: number) => void) 
       return new Response(
         new ReadableStream({
           start (controller) {
-            const reader = response.body!.getReader()
+            if (response.body === null) {
+              throw new Error('response.body is null')
+            }
+            const reader = response.body.getReader()
 
             read()
             function read () {
@@ -109,7 +112,7 @@ export interface Server extends Kill {
 
 export interface KillData<T extends Kill> {
   data: { [key: string]: Ref<T> };
-  progress?: number;
+  progress: Ref<number>;
 }
 
 export interface NSServer {
@@ -173,7 +176,7 @@ export const useKillStore = defineStore('kill', {
     fetch <T extends StateProperty> (type:T, filter?:Filter): Ref<KillData<StateType<T>>> {
       let entry = this.getList(type, filter)
       if (entry === undefined) {
-        entry = shallowRef<KillData<StateType<T>>>({ data: {} })
+        entry = shallowRef<KillData<StateType<T>>>({ data: {}, progress: ref(0) })
         unref(this.$state.killData[type as keyof typeof this.$state.killData] as Map<string, Ref<KillData<StateType<T>>>>).set(filter?.toURLSearchParams().toString() ?? '', entry)
         // console.log(isRef(entry), this.$state.killData)
       }
@@ -181,9 +184,9 @@ export const useKillStore = defineStore('kill', {
         `https://tone.sleepycat.date/v2/client/${type}?` +
             filter?.toURLSearchParams() ?? '',
         (progress) => {
-          if (entry && progress !== 1) {
-            unref(entry).progress = progress
-            triggerRef(entry)
+          if (entry && progress !== 1 && unref(entry).progress.value !== 1) {
+            unref(entry).progress.value = progress
+            triggerRef(unref(entry).progress)
           }
         }
       ).then(async (response) => {
@@ -194,7 +197,7 @@ export const useKillStore = defineStore('kill', {
               ref(e[1]) as Ref<StateType<T>>
             ])
           )
-          unref(entry).progress = 1
+          unref(entry).progress.value = 1
 
           triggerRef(entry)
         }

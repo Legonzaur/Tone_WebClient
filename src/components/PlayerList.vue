@@ -32,7 +32,6 @@ import { defineComponent, PropType, Ref, isRef } from 'vue'
 import { useKillStore, Player, Filter } from '@/stores/kill'
 import VirtualList from './List/VirtualList.vue'
 import LoadingBar from './LoadingBar.vue'
-import { cloneProxy } from 'vue-chartjs/dist/utils'
 
 export default defineComponent({
   components: { VirtualList, LoadingBar },
@@ -51,14 +50,13 @@ export default defineComponent({
     progress () {
       const filter = new Filter(this.filters)
       delete filter.player
-      return this.store.getList('players', filter)?.value.progress
+      return this.store.getList('players', filter)?.value.progress.value
     },
     players (): { [key: string]: Ref<Player> } {
       const filter = new Filter(this.filters)
       delete filter.player
       const data = this.store.getList('players', filter)?.value.data
       if (!data) return this.store.fetch('players', filter).value.data
-      console.log(isRef(data), isRef(Object.values(data)[0]))
       return data
     },
     playerList (): (Ref<Player> & { id: string })[] {
@@ -149,7 +147,6 @@ export default defineComponent({
 }
 
 .playerTable {
-  grid-area: list;
   margin-right: 1rem;
   height: 100%;
   user-select: none;

@@ -1,6 +1,12 @@
 <template>
   <div id="filters">
     <span class="multiselect-wrapper">
+
+      <!-- group-values="servers"
+        group-label="id"
+        label="name"
+        :group-select="true"
+        :options="groupedServers" -->
       <VueMultiselect
         selectLabel=""
         deselectLabel="remove"
@@ -21,6 +27,7 @@
         deselectLabel="remove"
         placeholder="Select gamemode"
         v-model="model.gamemode"
+        :custom-label="((e: any) => gamemodeLocale[e] || e)"
         :options="sortedGamemodeList"
         :allow-empty="true"
         :close-on-select="false"
@@ -43,7 +50,7 @@
       </VueMultiselect>
       <button @click="model.weapon = undefined" :disabled="!model.weapon">X</button>
     </span>
-
+    <button @click="applyFilters" :disabled="filters.server == model.server && filters.gamemode == model.gamemode && filters.weapon == model.weapon">Apply Filters</button>
     <span class="multiselect-wrapper">
       <VueMultiselect
         :options-limit="20"
@@ -57,7 +64,6 @@
       ></VueMultiselect>
       <button @click="playerHighlighted = undefined" :disabled="!playerHighlighted">X</button>
     </span>
-    <button @click="applyFilters" :disabled="filters.server == model.server && filters.gamemode == model.gamemode && filters.weapon == model.weapon">Apply Filters</button>
   </div>
 
   <div id="playerView">
@@ -79,6 +85,10 @@
       :playerHighlighted="playerHighlighted?.id"
     >
     </WeaponChart>
+    <GamemodeChart
+      :filters="{ player: playerHighlighted?.id, ...filters }"
+      :playerHighlighted="playerHighlighted?.id"
+    ></GamemodeChart>
   </div>
 </template>
 
@@ -87,11 +97,17 @@ import { Player, Weapon, Server, Kill, useKillStore, Filter } from '@/stores/kil
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
 import WeaponChart from '@/components/WeaponChart.vue'
+import GamemodeChart from '@/components/GamemodeChart.vue'
 import { Ref, defineComponent, unref } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import weapons from '../stores/weapons.json'
+import gamemodes from '../stores/gamemodes.json'
 import router from '@/router'
+
+function filterOutNull<T> (value:T | null):value is T {
+  return value !== null
+}
 
 export default defineComponent({
   name: 'PlayerView',
@@ -99,12 +115,13 @@ export default defineComponent({
     VueMultiselect,
     PlayerList,
     PlayerChart,
-    WeaponChart
+    WeaponChart,
+    GamemodeChart
   },
 
   data () {
     return {
-      model: { server: undefined, weapon: undefined } as unknown as {
+      model: { } as unknown as {
         weapon: string[] | undefined;
         server: string[] | undefined;
         gamemode: string[] | undefined;
@@ -112,7 +129,8 @@ export default defineComponent({
       filters: new Filter(),
       store: useKillStore(),
       playerHighlighted: undefined as (Player & { id: string }) | undefined,
-      weaponLocale: weapons as { [key: string]: string }
+      weaponLocale: weapons as { [key: string]: string },
+      gamemodeLocale: gamemodes as { [key: string]: string }
     }
   },
   beforeCreate () {
@@ -128,10 +146,8 @@ export default defineComponent({
   },
   computed: {
     servers (): { [key: string]: Ref<Server> } {
-      const filter = new Filter(this.filters)
-      delete filter.server
-      const data = this.store.getList('servers', filter)?.value.data
-      if (!data) return unref(this.store.fetch('servers', filter)).data
+      const data = this.store.getList('servers')?.value.data
+      if (!data) return unref(this.store.fetch('servers')).data
       return data
     },
     groupedServers () {
@@ -149,11 +165,11 @@ export default defineComponent({
       return hosts
     },
     weapons (): { [key: string]: Ref<Weapon> } {
-      const filter = new Filter(this.filters)
-      delete filter.weapon
-      delete filter.player
-      const data = this.store.getList('weapons', filter)?.value.data
-      if (!data) return this.store.fetch('weapons', filter).value.data
+      // const filter = new Filter(this.filters)
+      // delete filter.weapon
+      // delete filter.player
+      const data = this.store.getList('weapons')?.value.data
+      if (!data) return this.store.fetch('weapons').value.data
       return data
     },
     players (): { [key: string]: Ref<Player> } {
@@ -164,11 +180,11 @@ export default defineComponent({
       return data
     },
     gamemodes (): { [key: string]: Ref<Kill> } {
-      const filter = new Filter(this.filters)
-      delete filter.gamemode
-      delete filter.player
-      const data = this.store.getList('gamemodes', filter)?.value.data
-      if (!data) return this.store.fetch('gamemodes', filter).value.data
+      // const filter = new Filter(this.filters)
+      // delete filter.gamemode
+      // delete filter.player
+      const data = this.store.getList('gamemodes')?.value.data
+      if (!data) return this.store.fetch('gamemodes').value.data
       return data
     },
     sortedWeaponList (): string[] {
@@ -204,6 +220,14 @@ export default defineComponent({
     }
   },
   watch: {
+    model: {
+      handler () {
+        if (this.model.gamemode?.length === 0) this.model.gamemode = undefined
+        if (this.model.server?.length === 0) this.model.server = undefined
+        if (this.model.weapon?.length === 0) this.model.weapon = undefined
+      },
+      deep: true
+    },
     players () {
       const player = this.$route.query.player?.toString()
       if (player && this.playerHighlighted?.id !== player) {
@@ -255,22 +279,24 @@ export default defineComponent({
         }
       }
       if (this.filters.weapon !== this.$route.query.weapon) {
-        this.model.weapon = [this.$route.query.weapon].flat().filter(e => e ?? false).map(e => e!.toString())
+        if (this.$route.query.weapon) this.model.weapon = [this.$route.query.weapon].flat().filter(filterOutNull).map(e => e.toString())
+        else this.model.weapon = undefined
       }
       if (this.filters.server !== this.$route.query.server) {
-        if (this.$route.query.server) this.model.server = [this.$route.query.server].flat().filter(e => e ?? false).map(e => e!.toString())
+        if (this.$route.query.server) this.model.server = [this.$route.query.server].flat().filter(filterOutNull).map(e => e.toString())
         else this.model.server = undefined
       }
       if (this.filters.gamemode !== this.$route.query.gamemode) {
-        if (this.$route.query.gamemode) this.model.gamemode = [this.$route.query.gamemode].flat().filter(e => e ?? false).map(e => e!.toString())
+        if (this.$route.query.gamemode) this.model.gamemode = [this.$route.query.gamemode].flat().filter(filterOutNull).map(e => e.toString())
         else this.model.gamemode = undefined
       }
+      this.applyFilters()
     }
   }
 })
 </script>
 
-<style scoped>
+<style>
 .multiselect {
   margin: 0 0.5em 1em 0.5em;
 }
@@ -290,9 +316,9 @@ export default defineComponent({
   display: grid;
   overflow: auto;
   grid-template-areas:
-    "list chart"
-    "list info";
-  grid-template-columns: 50% 50%;
+    "list chart chart"
+    "list info1 info2";
+  grid-template-columns: 50% 25% 25%;
   grid-template-rows: 50% 50%;
 }
 
@@ -319,12 +345,35 @@ export default defineComponent({
 
   .playerChart {
     display: none;
+    grid-area: "chart";
   }
 
   .weaponChart {
     display: none;
+    grid-area: 'info1';
+  }
+  .gamemodeChart{
+    display:none;
+    grid-area: 'info2';
+  }
+  .playerTable{
+    grid-area: 'list';
   }
 }
+
+.playerChart {
+    grid-area: chart;
+  }
+
+  .weaponChart {
+    grid-area: info1;
+  }
+  .gamemodeChart{
+    grid-area: info2;
+  }
+  .playerTable{
+    grid-area: list;
+  }
 
 #filters {
   grid-area: filters;

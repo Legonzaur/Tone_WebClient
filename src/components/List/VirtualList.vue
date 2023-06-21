@@ -66,11 +66,11 @@ export default defineComponent({
       } else if (mustScrollDown) {
         this.vIndex = Math.min(scrollIndex, this.list.length - this.toLoad)
       }
-      if (mustScrollDown || mustScrollUp) {
-        const msg = (mustScrollDown ? 'down ' : '') + (mustScrollUp ? 'up ' : '')
-        // console.log(this.toLoad)
-        // console.log((this.list.length * this.$props.rowHeight) - (this.vIndex * this.$props.rowHeight) - (this.visibleCount * this.$props.rowHeight))
-      }
+      // if (mustScrollDown || mustScrollUp) {
+      // const msg = (mustScrollDown ? 'down ' : '') + (mustScrollUp ? 'up ' : '')
+      // console.log(this.toLoad)
+      // console.log((this.list.length * this.$props.rowHeight) - (this.vIndex * this.$props.rowHeight) - (this.visibleCount * this.$props.rowHeight))
+      // }
     }
   }
 
