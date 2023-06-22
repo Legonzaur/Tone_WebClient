@@ -10,7 +10,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartData, ChartOptions 
 import dataLabel from 'chartjs-plugin-datalabels'
 import { Weapon, Filter, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
-import { defineComponent, PropType, Ref, unref } from 'vue'
+import { defineComponent, PropType, Ref, triggerRef, unref } from 'vue'
 
 import LoadingBar from './LoadingBar.vue'
 
@@ -46,6 +46,7 @@ export default defineComponent({
       const filter = new Filter(this.filters)
       if (this.type === undefined) return 0
       if (!(['server', 'player', 'weapon', 'map', 'gamemode'].includes(this.type))) return 0
+      if (Object.keys(this.locale).length === 0) return 0
       const type = this.type as 'server' | 'player' | 'weapon' | 'map' | 'gamemode'
 
       if (this.type !== undefined) delete filter[type]
