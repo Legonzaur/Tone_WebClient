@@ -1,5 +1,5 @@
 <template>
-  <div class="gamemodeChart" ref="container">
+  <div class="chart" ref="container">
     <LoadingBar v-if="progress !== 1" :value="progress"></LoadingBar>
     <Doughnut :data="chart" :options="chartOptions" v-if="progress === 1" />
   </div>
@@ -173,9 +173,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.weaponChart {
-  width: calc(min(50vw, 50vh) - 3em);
-  height: calc(min(50vw, 50vh) - 3em);
+.chart {
+  width: 100%;
 }
 
 @media only screen and (max-width: 922px) {

@@ -174,8 +174,7 @@ export default defineComponent({
 
 <style scoped>
 .weaponChart {
-  width: calc(min(50vw, 50vh) - 3em);
-  height: calc(min(50vw, 50vh) - 3em);
+  width: 100%;
 }
 
 @media only screen and (max-width: 922px) {
