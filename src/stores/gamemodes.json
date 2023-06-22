@@ -15,5 +15,14 @@
   "sns": "Stick and Stones",
   "gg": "GunGame",
   "fd": "Frontier Defense",
-  "ffa": "Free For All"
+  "ffa": "Free For All",
+  "chamber": "One in the Chamber",
+  "fastball": "Fastball",
+  "ctf_comp": "Competitive CTF",
+  "hidden":"The Hidden",
+  "hs":"Hide and Seek",
+  "inf":"Infection",
+  "kr":"Amped Killrace",
+  "tffa":"Titan FFA",
+  "tt":"Titan Tag"
 }
