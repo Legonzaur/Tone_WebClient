@@ -1,5 +1,5 @@
 <template>
-  <div class="weaponChart" ref="container">
+  <div class="chart" ref="container">
     <LoadingBar v-if="progress !== 1" :value="progress"></LoadingBar>
     <Doughnut :data="chart" :options="chartOptions" v-if="progress === 1" />
   </div>
@@ -11,21 +11,25 @@ import dataLabel from 'chartjs-plugin-datalabels'
 import { Weapon, Filter, useKillStore } from '@/stores/kill'
 import { Doughnut } from 'vue-chartjs'
 import { defineComponent, PropType, Ref, unref } from 'vue'
-import weapons from '../stores/weapons.json'
 
 import LoadingBar from './LoadingBar.vue'
 
 ChartJS.register(ArcElement, Tooltip, Legend, dataLabel)
 
 export default defineComponent({
-  name: 'WeaponChart',
+  name: 'PieChart',
   props: {
     filters: Object as PropType<Filter>,
-    playerHighlighted: String
+    playerHighlighted: String,
+    type: Object as PropType<'server' | 'player' | 'weapon' | 'map' | 'gamemode'>
   },
   emits: ['highlightPlayer'],
   components: {
     Doughnut, LoadingBar
+  },
+  created () {
+    // eslint-disable-next-line no-extra-bind
+    import(`../stores/${this.type}s.json`).then((e => { this.locale = e }).bind(this))
   },
   mounted () {
     this.refreshColors++
@@ -33,15 +37,20 @@ export default defineComponent({
   data: () => {
     return {
       store: useKillStore(),
-      refreshColors: 0
+      refreshColors: 0,
+      locale: {} as {[key:string]:string}
     }
   },
   computed: {
     progress () {
       const filter = new Filter(this.filters)
-      delete filter.weapon
-      const data = this.store.getList('weapons', filter)?.value
-      if (!data) return this.store.fetch('weapons', filter).value.progress.value
+      if (this.type === undefined) return 0
+      if (!(['server', 'player', 'weapon', 'map', 'gamemode'].includes(this.type))) return 0
+      const type = this.type as 'server' | 'player' | 'weapon' | 'map' | 'gamemode'
+
+      if (this.type !== undefined) delete filter[type]
+      const data = this.store.getList(`${type}s`, filter)?.value
+      if (!data) return this.store.fetch(`${type}s`, filter).value.progress.value
       return data.progress.value
     },
     colors () {
@@ -89,14 +98,14 @@ export default defineComponent({
           }
         ]
       }
-      if (!this.sortedWeaponList) {
+      if (!this.sortedList) {
         return chartData
       }
-      chartData.datasets[0].data = this.sortedWeaponList.map((e) => {
-        if (!this.weapons) {
+      chartData.datasets[0].data = this.sortedList.map((e) => {
+        if (!this.values) {
           return 0
         }
-        return this.weapons[e].value.kills
+        return this.values[e].value.kills
       })
       return chartData
     },
@@ -111,9 +120,8 @@ export default defineComponent({
         plugins: {
           datalabels: {
             formatter: (value, context) => {
-              const weaponId = this.sortedWeaponList[context.dataIndex]
-              // if (!(weapons as {[key:string]:string})[weaponId]) console.log(weaponId)
-              return (weapons as { [key: string]: string })[weaponId] || weaponId
+              const weaponId = this.sortedList[context.dataIndex]
+              return this.locale[weaponId] || weaponId
             },
             backgroundColor: (context) => {
               return context.dataset.backgroundColor(context, options)
@@ -133,12 +141,12 @@ export default defineComponent({
             callbacks: {
               label: (ctx: any) => {
                 let label: string
-                if (!this.sortedWeaponList) {
+                if (!this.sortedList) {
                   label = ctx.dataset.labels[ctx.dataIndex]
                 } else {
-                  label = this.sortedWeaponList[ctx.dataIndex]
+                  label = this.sortedList[ctx.dataIndex]
                 }
-                label += ' (' + this.weapons[label].value.kills + ' kills)'
+                label += ' (' + this.values[label].value.kills + ' kills)'
                 return label
               }
             }
@@ -147,21 +155,23 @@ export default defineComponent({
       }
       return options
     },
-    weapons (): { [key: string]: Ref<Weapon> } {
+    values (): { [key: string]: Ref<Weapon> } {
       const filter = new Filter({ ...this.filters, player: this.playerHighlighted })
-      delete filter.weapon
-      const data = this.store.getList('weapons', filter)?.value.data
-      if (!data) return this.store.fetch('weapons', filter).value.data
+      if (this.type === undefined) return {}
+      if (!(['server', 'player', 'weapon', 'map', 'gamemode'].includes(this.type))) return {}
+      const type = this.type as 'server' | 'player' | 'weapon' | 'map' | 'gamemode'
+      const data = this.store.getList(`${type}s`, filter)?.value.data
+      if (!data) return this.store.fetch(`${type}s`, filter).value.data
       return data
     },
-    sortedWeaponList (): string[] {
-      if (!this.weapons) return []
-      const weapons = Object.keys(this.weapons).filter(e => unref(this.weapons[e]).kills > 0)
+    sortedList (): string[] {
+      if (!this.values) return []
+      const weapons = Object.keys(this.values).filter(e => unref(this.values[e]).kills > 0)
       weapons.sort((a, b) => {
-        if (Number(this.weapons[a].value.kills) < Number(unref(this.weapons[b]).kills)) {
+        if (Number(this.values[a].value.kills) < Number(unref(this.values[b]).kills)) {
           return -1
         }
-        if (Number(this.weapons[a].value.kills) > Number(unref(this.weapons[b]).kills)) {
+        if (Number(this.values[a].value.kills) > Number(unref(this.values[b]).kills)) {
           return 1
         }
         return 0
@@ -173,7 +183,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.weaponChart {
+.chart {
   width: 100%;
 }
 

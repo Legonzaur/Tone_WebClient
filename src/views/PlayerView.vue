@@ -80,15 +80,16 @@
       :playerHighlighted="playerHighlighted?.id"
     >
     </PlayerChart>
-    <WeaponChart
+    <PieChart
       :filters="{ player: playerHighlighted?.id, ...filters }"
       :playerHighlighted="playerHighlighted?.id"
-    >
-    </WeaponChart>
-    <GamemodeChart
+      type="weapon"
+    ></PieChart>
+    <PieChart
       :filters="{ player: playerHighlighted?.id, ...filters }"
       :playerHighlighted="playerHighlighted?.id"
-    ></GamemodeChart>
+      type="gamemode"
+    ></PieChart>
   </div>
 </template>
 
@@ -96,8 +97,7 @@
 import { Player, Weapon, Server, Kill, useKillStore, Filter } from '@/stores/kill'
 import PlayerList from '@/components/PlayerList.vue'
 import PlayerChart from '@/components/PlayerChart.vue'
-import WeaponChart from '@/components/WeaponChart.vue'
-import GamemodeChart from '@/components/GamemodeChart.vue'
+import PieChart from '@/components/PieChart.vue'
 import { Ref, defineComponent, unref } from 'vue'
 import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
@@ -115,8 +115,7 @@ export default defineComponent({
     VueMultiselect,
     PlayerList,
     PlayerChart,
-    WeaponChart,
-    GamemodeChart
+    PieChart
   },
 
   data () {
