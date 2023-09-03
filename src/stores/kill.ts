@@ -181,7 +181,7 @@ export const useKillStore = defineStore('kill', {
         // console.log(isRef(entry), this.$state.killData)
       }
       fetchWithLoading(
-        `https://tone.sleepycat.date/v2/client/${type}?` +
+        `https://toneapi.ovh/v2/client/${type}?` +
             filter?.toURLSearchParams() ?? '',
         (progress) => {
           if (entry && progress !== 1 && unref(entry).progress.value !== 1) {

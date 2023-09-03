@@ -44,7 +44,7 @@ type websocketData = {
 // dev stuff
 
 const store = useKillStore()
-const socket = new WebSocket('wss://tone.sleepycat.date/v2/client/websocket')
+const socket = new WebSocket('wss://toneapi.ovh/v2/client/websocket')
 socket.onmessage = function (e) {
   if (e.data === 'ping') return socket.send('pong')
   const data = JSON.parse(e.data)
